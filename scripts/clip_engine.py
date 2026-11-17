@@ -269,6 +269,42 @@ def compute_jump_cut_segments(
     return kept, retimed
 
 
+def prepend_flash_hook(
+    intervals: list[tuple[float, float]],
+    words: list[dict[str, Any]],
+    clip_start: float,
+    clip_end: float,
+    peak_offset: float,
+    flash_dur: float = 1.7,
+) -> tuple[list[tuple[float, float]], list[dict[str, Any]]]:
+    """
+    Prepend a 1.7s cold-open flash-forward from the peak moment at t=0.0s,
+    followed by the main kept intervals, and re-time all captions accurately.
+    """
+    rel_dur = max(2.5, clip_end - clip_start)
+    if peak_offset < 3.0:
+        return intervals, words
+
+    f_start = round(max(0.0, peak_offset - 0.5), 3)
+    f_end = round(min(rel_dur, f_start + flash_dur), 3)
+    if f_end - f_start < 1.0:
+        return intervals, words
+
+    combined = [(f_start, f_end), *intervals]
+    retimed: list[dict[str, Any]] = []
+    acc = 0.0
+    for seg_s, seg_e in combined:
+        for w in words:
+            rw_s = w["start"] - clip_start
+            rw_e = w["end"] - clip_start
+            if rw_e >= seg_s and rw_s <= seg_e:
+                new_s = acc + max(0.0, rw_s - seg_s)
+                new_e = acc + min(seg_e - seg_s, max(0.05, rw_e - seg_s))
+                retimed.append({"word": w["word"], "start": round(new_s, 3), "end": round(new_e, 3)})
+        acc += seg_e - seg_s
+    return combined, retimed
+
+
 def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> tuple[float, float, float, float]:
     """
     Return normalized (x, y, w, h) facecam crop rectangle for 16:9 -> 1080x700 top panel.
@@ -414,9 +450,9 @@ def render_portrait_clip(
     inputs = ["-ss", f"{abs_start:.3f}", "-t", f"{duration:.3f}", "-i", str(source_video)]
     next_idx = 1
 
-    # Step 1: Optional jump-cut concat on [0:v]/[0:a]
+    # Step 1: Optional cold-open flash-forward + jump-cut concat on [0:v]/[0:a]
     filter_parts: list[str] = []
-    if kept_intervals and len(kept_intervals) > 1:
+    if kept_intervals and len(kept_intervals) >= 1 and (len(kept_intervals) > 1 or kept_intervals[0][0] > 0.01):
         seg_labels = []
         for k, (ks, ke) in enumerate(kept_intervals):
             filter_parts.append(f"[0:v]trim=start={ks:.3f}:end={ke:.3f},setpts=PTS-STARTPTS[vseg{k}]")
@@ -538,6 +574,7 @@ def main() -> None:
     parser.add_argument("--layout", choices=["center", "blur", "split"], default="split", help="Portrait framing mode.")
     parser.add_argument("--cam-pos", default="auto", help="Facecam position for split mode: auto, tl, tr, bl, br, center.")
     parser.add_argument("--trim-silence", action="store_true", help="Jump-cut pauses > 0.55s while keeping captions synced.")
+    parser.add_argument("--flash-hook", action="store_true", help="Prepend a 1.7s peak-reaction cold-open hook at 0.0s.")
     parser.add_argument("--sfx", action="store_true", help="Add subtle hook whoosh + peak reaction impact SFX.")
     parser.add_argument("--model", default="base", help="Whisper model size (tiny, base, small, medium).")
     parser.add_argument("--language", default=None, help="Optional language code (e.g. en).")
@@ -606,6 +643,16 @@ def main() -> None:
         if args.trim_silence:
             kept_intervals, retimed_words = compute_jump_cut_segments(
                 clip["words"], clip["start"], clip["end"]
+            )
+            if args.flash_hook:
+                kept_intervals, retimed_words = prepend_flash_hook(
+                    kept_intervals, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
+                )
+            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True)
+        elif args.flash_hook:
+            base_iv = [(0.0, round(clip["end"] - clip["start"], 3))]
+            kept_intervals, retimed_words = prepend_flash_hook(
+                base_iv, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
             )
             build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True)
         else:

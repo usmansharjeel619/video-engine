@@ -2,16 +2,21 @@
 name: viral-stream-clipper
 description: >-
   Pro workflow for turning long gaming/IRL livestreams (e.g., IShowSpeed, Kai Cenat, GTA 6)
-  into viral 9:16 portrait clips with split-screen facecam+gameplay, silence jump-cuts,
-  kinetic word-by-word captions, strategic SFX, and Content Rewards compliance.
+  into viral 9:16 portrait clips with split-screen facecam+gameplay, cold-open flash-forward hooks,
+  silence jump-cuts, kinetic word-by-word captions, strategic SFX, and Content Rewards compliance.
 ---
 
 # Viral Stream Clipper Playbook
 
-## 1. Clip Selection & Retention Rules
-- **Sweet-spot duration:** `22–45 seconds`. Never include greetings, dead air, or slow buildup.
-- **0–2s Hook Rule:** Start *mid-action* or *mid-reaction* (shock, scream, mission fail, bold statement). Pair with a crisp 4–8 word top hook banner (`MarginV=220`).
-- **One Idea Per Clip:** Every clip must have a clear setup -> reaction/payoff arc.
+## 1. Outclass 0–2s Hook Engineering (Most Important Rule)
+- **Zero Slow Starts:** Never open a clip on a greeting, throat clear, or quiet setup. Start on the **exact first spoken syllable** or an explosive action frame.
+- **Cold-Open Flash-Forward (`--flash-hook`):** For setup->payoff moments, prepend a **1.5–1.8s tease of the peak scream/reveal** at `0.0s` before cutting into the story, paired with a crisp `whoosh` transition.
+- **4 Proven Text Hook Formulas (4–7 words max, UPPERCASE):**
+  1. **Stakes / Contrast:** `NEVER LEFT THE USA -> WINS $10,000 TRIP`
+  2. **Shock / Disbelief:** `NO WAY SPEED DID THIS IN GTA 6 💀`
+  3. **Test / Payoff:** `SPEAK CANTONESE = $10,000 EXPEDIA TRIP`
+  4. **Wait-for-it Curiosity:** `WATCH SPEED'S JAW DROP AT 0:12 🤯`
+- **Sweet-spot duration:** `22–45 seconds`. One clear setup -> payoff arc per clip.
 
 ## 2. Layout Selection (`1080x1920`)
 - **`split` (Gaming / GTA 6 / Reaction Streams):**
@@ -30,5 +35,6 @@ description: >-
 
 ## 4. Content Rewards & Distribution Rules
 - **Brief Compliance First:** Always verify campaign rules (approved stream timestamps, required brand/hashtag mentions, exact destination/title accuracy, allowed logo overlays, no banned logos, no AI-generated footage).
+- **Organic Only:** NEVER use paid Promote/Boost on Content Rewards clips (triggers rejection and bans).
 - **Posting Schedule (UTC+3):** 2–3 clips/day spaced 3+ hours apart at **5:00 PM**, **8:00 PM**, and **11:30 PM** to hit US/UK/CA/AU peak hours.
 - **Submission Window:** Submit live TikTok, Instagram Reels, and YouTube Shorts URLs to Content Rewards within **30 minutes of posting**.
