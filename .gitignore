@@ -8,5 +8,6 @@ output/
 *.mov
 *.mp3
 *.wav
+!sfx/*.wav
 __pycache__/
 *.pyc
