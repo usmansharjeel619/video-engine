@@ -1,0 +1,28 @@
+{
+  "name": "video-engine",
+  "version": "0.1.0",
+  "description": "Programmatic video engine powered by Hyperframes, FFmpeg, Whisper, and Edge TTS",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "video-engine": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "doctor": "tsx src/cli.ts doctor",
+    "preview": "hyperframes preview composition",
+    "render": "tsx src/cli.ts render composition -o output/render.mp4",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "hyperframes": "^0.9.54"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}

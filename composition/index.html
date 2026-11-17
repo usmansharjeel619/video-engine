@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Engine Composition</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #090d16;
+        color: #f8fafc;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        overflow: hidden;
+      }
+      #stage {
+        position: relative;
+        width: 1280px;
+        height: 720px;
+        background: radial-gradient(circle at 25% 25%, #1e293b 0%, #090d16 70%);
+      }
+      #badge {
+        position: absolute;
+        top: 160px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        padding: 10px 22px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      #headline {
+        position: absolute;
+        top: 255px;
+        left: 160px;
+        width: 960px;
+        font-size: 68px;
+        font-weight: 700;
+        line-height: 1.1;
+        text-align: center;
+      }
+      #subline {
+        position: absolute;
+        top: 380px;
+        left: 220px;
+        width: 840px;
+        font-size: 28px;
+        line-height: 1.4;
+        color: #94a3b8;
+        text-align: center;
+      }
+      .progress-track {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .progress-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #38bdf8, #818cf8);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="4"
+      data-width="1280"
+      data-height="720"
+    >
+      <div id="badge" class="clip" data-start="0" data-duration="4" data-track-index="0">
+        Hyperframes · FFmpeg · Whisper · Edge TTS
+      </div>
+      <h1 id="headline" class="clip" data-start="0" data-duration="4" data-track-index="1">
+        Video Engine Ready
+      </h1>
+      <p id="subline" class="clip" data-start="0.3" data-duration="3.7" data-track-index="2">
+        Deterministic HTML rendering with AI narration and transcription.
+      </p>
+      <div class="progress-track">
+        <div id="progress" class="progress-bar"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo('#headline', { scale: 0.96, opacity: 0.85 }, { scale: 1, opacity: 1, duration: 0.6, ease: 'power2.out' }, 0)
+        .from('#subline', { opacity: 0, y: 12, duration: 0.6, ease: 'power2.out' }, 0.3)
+        .to('#progress', { width: '100%', duration: 4, ease: 'none' }, 0);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines.main = tl;
+    </script>
+  </body>
+</html>

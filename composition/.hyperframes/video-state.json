@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "historyId": "8f7b2385-c039-4033-979c-4bd2222d26f9",
+  "currentRevision": "786dc279-6672-43dd-8d9e-6de93b319479",
+  "pendingChanges": false,
+  "files": {
+    "index.html": {
+      "hash": "187a10d771d6c77a15987986e5c61368989c52f774e1f39cf733939b017ff303",
+      "content": "C:\\Users\\usman\\.cache\\hyperframes\\history\\8f7b2385-c039-4033-979c-4bd2222d26f9\\blobs\\18\\187a10d771d6c77a15987986e5c61368989c52f774e1f39cf733939b017ff303"
+    }
+  },
+  "revisions": {
+    "786dc279-6672-43dd-8d9e-6de93b319479": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794779686975,
+      "endedAt": 1794779686979,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\usman\\.cache\\hyperframes\\history\\8f7b2385-c039-4033-979c-4bd2222d26f9\\blobs\\ec\\ec7bbe0cac0c0ae315978f8323aa816627b086c575defb3ac38cd2132083b9a7",
+          "after": "C:\\Users\\usman\\.cache\\hyperframes\\history\\8f7b2385-c039-4033-979c-4bd2222d26f9\\blobs\\18\\187a10d771d6c77a15987986e5c61368989c52f774e1f39cf733939b017ff303"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "786dc279-6672-43dd-8d9e-6de93b319479",
+      "id": "725d3672-5752-4bae-aa63-9088470276a4"
+    },
+    "revisions": {
+      "786dc279-6672-43dd-8d9e-6de93b319479": [
+        {
+          "id": "725d3672-5752-4bae-aa63-9088470276a4",
+          "scope": "project",
+          "report": "C:\\Users\\usman\\.gemini\\antigravity\\scratch\\video-engine\\composition\\.hyperframes\\artifacts\\checks\\725d3672-5752-4bae-aa63-9088470276a4.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": true,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": false,
+              "safeZones": [
+                "tiktok",
+                "reels",
+                "shorts"
+              ],
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794779691208,
+          "contentHash": "2a4843b76b3753cf51e466037d7bff317b63e26bcd9ff8f873743e659bdfac30",
+          "revision": "786dc279-6672-43dd-8d9e-6de93b319479",
+          "inputFingerprint": "b9db3bddb2f1b7607367ca40b752cf7bd0dd77e6affd861342998ab1b12489f6",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "1d693fe8-c7b7-44e9-9842-fd4cebe0997c",
+        "scope": "project",
+        "report": "C:\\Users\\usman\\.gemini\\antigravity\\scratch\\video-engine\\composition\\.hyperframes\\artifacts\\checks\\1d693fe8-c7b7-44e9-9842-fd4cebe0997c.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "cache": true,
+            "contrast": true,
+            "craft": true,
+            "strict": false,
+            "snapshots": false,
+            "safeZones": [
+              "tiktok",
+              "reels",
+              "shorts"
+            ],
+            "browserGpuMode": "auto",
+            "includeUnmounted": false
+          }
+        },
+        "createdAt": 1794779674432,
+        "contentHash": "f2105fd67a156eef43a4aa82e0caaf1ee9ccbeebd4172764cb4b5bfc5110b5b0",
+        "revision": null,
+        "inputFingerprint": "adffd73827de47f1ea4ef83219a6e006ba4a157f97036346f17953b53247bfc1",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  }
+}

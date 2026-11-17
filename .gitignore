@@ -1,0 +1,12 @@
+node_modules/
+dist/
+output/
+.work/
+.env
+.creds/
+*.mp4
+*.mov
+*.mp3
+*.wav
+__pycache__/
+*.pyc

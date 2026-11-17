@@ -1,0 +1,58 @@
+name: Auto Clip & Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Source video or stream URL"
+        required: true
+      start_time:
+        description: "Optional start timestamp (e.g. 02:56:29)"
+        required: false
+        default: ""
+      end_time:
+        description: "Optional end timestamp"
+        required: false
+        default: ""
+      layout:
+        description: "Portrait framing (center or blur)"
+        required: false
+        default: "center"
+      top_n:
+        description: "Number of clips to generate"
+        required: false
+        default: "3"
+      tags:
+        description: "Space-separated hashtags"
+        required: false
+        default: "shorts viral clips"
+
+jobs:
+  clip-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system and Python dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install faster-whisper yt-dlp upload-post
+
+      - name: Run automated portrait clipper
+        run: |
+          ARGS="--input '${{ inputs.video_url }}' --output-dir output/clips --layout ${{ inputs.layout }} --top-n ${{ inputs.top_n }}"
+          if [ -n "${{ inputs.start_time }}" ]; then ARGS="$ARGS --start '${{ inputs.start_time }}'"; fi
+          if [ -n "${{ inputs.end_time }}" ]; then ARGS="$ARGS --end '${{ inputs.end_time }}'"; fi
+          eval python scripts/clip_engine.py $ARGS
+
+      - name: Auto-publish clips to TikTok, Instagram Reels, and YouTube Shorts
+        env:
+          PUBLISH_PROVIDER: upload-post
+          UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
+          UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+        run: |
+          python scripts/publish_clips.py --manifest output/clips/manifest.json --tags ${{ inputs.tags }}
