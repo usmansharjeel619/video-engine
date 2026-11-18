@@ -4,6 +4,11 @@
     "subtitle": "Split-Screen Facecam + Gameplay · Outclass Hooks",
     "batches": [
       {
+        "batch": "Batch 2 (4 Bangers — Strict 2s Hooks & Pill Overlays)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch2",
+        "manifest": "manifests/gta6_batch2.json"
+      },
+      {
         "batch": "Batch 1 (First Boot & Viral Moments)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch1",
         "manifest": "manifests/gta6_batch1.json"
