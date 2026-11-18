@@ -55,8 +55,9 @@ ssh -i "$env:USERPROFILE\.ssh\tarq_deploy" ubuntu@100.76.60.83
 Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live in [docs/SERVER_INFRASTRUCTURE.md](docs/SERVER_INFRASTRUCTURE.md).
 
 ### Currently Running (Keep Running)
-1. **Native End-to-End Pipeline (`~/video-engine/scripts/viral_pipeline.py`)** — Primary production workflow on `ubuntu@100.76.60.83`. Combines OpenShorts' 2-pass Gemini virality scoring (`gemini-3-flash-preview`), Pass-3 Vision hook grounding (`viral_selector.py`), Pillow emoji hook banners (`hook_renderer.py`), and 6 kinetic ASS caption presets (`caption_styles.py`) with our native Streamer Split-Screen (`clip_engine.py`), cold-open flash-forward hooks, silence jump-cuts, SFX, and QA gate.
-2. **Postiz (`~/postiz`)** — Social scheduling UI + Temporal + Postgres + Redis + Elasticsearch.
+1. **Zero-Token Batch Worker (`tmux` session `clip-worker`)** — Runs `scripts/auto_batch_worker.py` continuously on `ubuntu@100.76.60.83`, clipping 15m slices from `manifests/auto_sources.json` via `scripts/viral_pipeline.py` (`gemini-3-flash-preview` + Faster-Whisper + FFmpeg) and writing `.ready_for_qa` markers.
+2. **Scheduled Codex QA Cron (`scripts/codex_qa_cron.sh`, `0 */2 * * *`)** — Checks every 2 hours for `.ready_for_qa` batches (0 tokens used when idle), then invokes a single `codex exec` (`gpt-6.2-sol`, `medium`) pass to visually inspect `qa/*.png`, verify `ffprobe`, fix any crop/hook issues, release to GitHub, rebuild `docs/index.html`, and push.
+3. **Postiz (`~/postiz`)** — Social scheduling UI + Temporal + Postgres + Redis + Elasticsearch.
    - Local port: `127.0.0.1:4008` (`postiz`), `127.0.0.1:8080` (`temporal-ui`), `127.0.0.1:7233` (`temporal`)
    - Tailscale HTTPS URL: `https://instance-20260916-2320.tail256180.ts.net:4007`
    - SuperAdmin login email: `sidemail619@gmail.com` (cookie fix in `~/postiz/subdomain.management.js`)

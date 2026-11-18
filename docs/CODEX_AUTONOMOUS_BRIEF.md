@@ -4,8 +4,9 @@ Read [AGENTS.md](../AGENTS.md), [SERVER_INFRASTRUCTURE.md](SERVER_INFRASTRUCTURE
 
 ---
 
-## 1. Mission
-Continuously turn available stream footage into **ultra-viral 9:16 portrait clips** on this cloud server (`ubuntu@100.76.60.83`), **inspect and QA every batch**, fix any framing/hook/caption bugs if found, publish verified batches to **GitHub Releases + Mobile Upload Hub (`https://usmansharjeel619.github.io/video-engine/`)**, and update/push repo state cleanly.
+## 1. Two-Stage Architecture (Credit-Saver Mode)
+- **`clip-worker` (`tmux` session running `scripts/auto_batch_worker.py`)** runs 24/7 with **0 Codex credits**: it downloads 15-minute slices from `manifests/auto_sources.json` (plus any local files in `output/gta6-streams/`), runs `viral_pipeline.py` (`--min-virality 80 --min-hook-score 85`) via free-tier Gemini + Faster-Whisper + FFmpeg, cleans `.work/source.mp4` & `.wav`, and writes `.ready_for_qa` markers under `output/auto_batches/<batch_id>/`.
+- **`codex_qa_cron.sh` (runs via `crontab` every 2 hours: `0 */2 * * *`)** checks if any `.ready_for_qa` (or unpublished `output/gta6-batch3-tail`) exists. **If nothing is waiting, it exits without invoking Codex (0 credits).** Only when batches are waiting does it launch a single `codex exec` QA & publish pass.
 
 ---
 

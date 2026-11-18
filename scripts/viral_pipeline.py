@@ -64,7 +64,7 @@ def _append_tags(caption: str, extra_tags: list[str]) -> str:
 
 def qa_verify_clip(mp4_path: Path, qa_dir: Path) -> tuple[bool, dict[str, Any]]:
     """
-    Verify rendered MP4 has 1080x1920 video, A/V start_time=0.000000, >= 5s duration,
+    Verify rendered MP4 has 1080x1920 video, A/V start_time=0.000000, >= 10s duration,
     and extract 2 visual QA PNG stills (hook + mid-clip caption).
     """
     cmd = [
@@ -95,18 +95,16 @@ def qa_verify_clip(mp4_path: Path, qa_dir: Path) -> tuple[bool, dict[str, Any]]:
     else:
         if int(v_stream.get("width") or 0) != 1080 or int(v_stream.get("height") or 0) != 1920:
             issues.append(f"bad dimensions {v_stream.get('width')}x{v_stream.get('height')}")
-        v_start = abs(float(v_stream.get("start_time") or 0.0))
-        if v_start >= 0.05:
-            issues.append(f"video start_time={v_start:.3f}")
+        if v_stream.get("start_time") != "0.000000":
+            issues.append(f"video start_time={v_stream.get('start_time', 'missing')}")
 
     if not a_stream:
         issues.append("missing audio stream")
     else:
-        a_start = abs(float(a_stream.get("start_time") or 0.0))
-        if a_start >= 0.05:
-            issues.append(f"audio start_time={a_start:.3f}")
+        if a_stream.get("start_time") != "0.000000":
+            issues.append(f"audio start_time={a_stream.get('start_time', 'missing')}")
 
-    if duration < 5.0:
+    if duration < 10.0:
         issues.append(f"duration too short ({duration:.2f}s)")
 
     qa_dir.mkdir(parents=True, exist_ok=True)
@@ -116,7 +114,8 @@ def qa_verify_clip(mp4_path: Path, qa_dir: Path) -> tuple[bool, dict[str, Any]]:
         (qa_dir / f"{stem}_tmid_cap.png", max(0.5, duration * 0.45)),
     ]
     for img_path, ts in stills:
-        subprocess.run(
+        img_path.unlink(missing_ok=True)
+        extraction = subprocess.run(
             [
                 "ffmpeg",
                 "-y",
@@ -131,6 +130,8 @@ def qa_verify_clip(mp4_path: Path, qa_dir: Path) -> tuple[bool, dict[str, Any]]:
             capture_output=True,
             check=False,
         )
+        if extraction.returncode != 0 or not img_path.is_file() or img_path.stat().st_size == 0:
+            issues.append(f"could not extract QA still {img_path.name}")
 
     passed = len(issues) == 0
     return passed, {"duration": round(duration, 2), "issues": issues, "qa_stills": [str(p) for p, _ in stills]}
