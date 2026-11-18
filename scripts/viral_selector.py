@@ -88,6 +88,8 @@ class DetailClipModel(BaseModel):
     video_description_for_instagram: str
     video_title_for_youtube_short: str
     viral_hook_text: str
+    first_two_seconds: str = Field(default="")
+    hook_score: int = Field(default=0)
     pinned_comment: str = Field(default="")
     why: str = Field(default="")
 
@@ -133,10 +135,13 @@ CLIP RULES:
 - Return only valid JSON matching the schema.
 - Each clip must be {min_secs:g} to {max_secs:g} seconds long, using exact timestamps in absolute seconds from the start of the video.
 - Stay within the candidate window boundaries (referencing exact word timestamps provided).
-- THE 2-SECOND RULE: The clip MUST open on an immediate hook, high-energy reaction, provocative claim, or compelling action. If a moment starts weak, trim the start closer to the tension or skip it.
+- THE 2-SECOND RULE (NON-NEGOTIABLE): Second 0.0-2.0 of the clip must be the single most explosive thing in it — a scream, a shocked outburst, a crazy one-liner, a gunshot/crash, a jaw-drop reveal. NOT setup, NOT "yo chat", NOT walking around, NOT a question that gets answered later. Set `start` so the first spoken word IS the hook. If a moment has no explosive opening, DO NOT return it.
+- `first_two_seconds`: write the exact words spoken / action seen in seconds 0-2 of your chosen start.
+- `hook_score`: brutally honest 0-100 for ONLY those first 2 seconds. 90+ = a stranger scrolling at full speed would stop instantly. 70 = decent. Under 70 = weak. Most moments are under 70 — say so.
+- QUALITY OVER QUANTITY: Returning 1 banger is far better than 4 average clips. Returning zero is acceptable if nothing is truly viral.
 - Do not cut mid-word or mid-phrase; snap cleanly to natural pauses around word boundaries.
 - STANDS ALONE: A cold viewer scrolling TikTok/Reels/Shorts must immediately understand the premise without seeing the rest of the VOD. Never start on an unexplained pronoun ("that thing", "so anyway"). Move start slightly earlier if 2-4s of setup makes the payoff land harder — never cut off the payoff!
-- HOW MANY: Return {min_clips} to {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window and pick genuine bangers (never pad with weak filler).
+- HOW MANY: Return UP TO {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window but only return genuine bangers (never pad with weak filler).
 - DIVERSITY: Never return two clips covering the same joke, point, or beat.
 {instructions_block}{keyword_block}
 HOOK PLAYBOOK — craft `viral_hook_text` (max 10 words + 1-2 fitting emojis in {language}):
@@ -606,6 +611,7 @@ def select_clips_gemini(
     instructions: str | None = None,
     require_keyword: str | None = None,
     extra_tags: list[str] | None = None,
+    min_hook_score: int = 0,
 ) -> list[dict[str, Any]]:
     """Pass 2: Extract exact viral clips, hooks, platform copy & snap edges to words."""
     from google.genai import types as genai_types
@@ -692,6 +698,8 @@ def select_clips_gemini(
                 "source_window_id": item.get("source_window_id", ""),
                 "predicted_score": int(item.get("predicted_score") or 0),
                 "viral_hook_text": str(item.get("viral_hook_text") or "").strip(),
+                "first_two_seconds": str(item.get("first_two_seconds") or "").strip(),
+                "hook_score": int(item.get("hook_score") or 0),
                 "video_title_for_youtube_short": str(item.get("video_title_for_youtube_short") or "").strip(),
                 "video_description_for_tiktok": str(item.get("video_description_for_tiktok") or "").strip(),
                 "video_description_for_instagram": str(item.get("video_description_for_instagram") or "").strip(),
@@ -703,6 +711,13 @@ def select_clips_gemini(
         )
 
     deduped = dedupe_overlapping(processed, ratio=0.25)
+    for c in deduped:
+        print(
+            f"  candidate {c['start']:.1f}-{c['end']:.1f}s viral={c['predicted_score']} "
+            f"hook2s={c['hook_score']} | {c['first_two_seconds'][:70]}"
+        )
+    if min_hook_score > 0:
+        deduped = [c for c in deduped if c["hook_score"] >= min_hook_score]
     if min_virality > 0:
         passing = [c for c in deduped if c["predicted_score"] >= min_virality]
         if not passing and deduped and allow_below_min:
@@ -817,6 +832,7 @@ def analyze_and_select_viral_clips(
     extra_tags: list[str] | None = None,
     model_name: str | None = None,
     api_key: str | None = None,
+    min_hook_score: int = 0,
 ) -> list[dict[str, Any]]:
     """Run full Pass 1 -> Pass 2 -> Pass 3 Gemini viral moment selection."""
     from google import genai
@@ -865,6 +881,7 @@ def analyze_and_select_viral_clips(
         instructions=instructions,
         require_keyword=require_keyword,
         extra_tags=extra_tags,
+        min_hook_score=min_hook_score,
     )
 
     if ground_hooks and selected and source_video.exists():

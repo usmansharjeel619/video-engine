@@ -391,7 +391,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--min-duration", type=float, default=20.0, help="Min clip duration seconds.")
     p.add_argument("--max-duration", type=float, default=55.0, help="Max clip duration seconds.")
     p.add_argument("--top-n", type=int, default=5, help="Max clips to export (default: 5).")
-    p.add_argument("--min-virality", type=int, default=65, help="Minimum Gemini predicted_score 0-100 (default: 65).")
+    p.add_argument("--min-virality", type=int, default=80, help="Minimum Gemini predicted_score 0-100 (default: 80).")
+    p.add_argument("--min-hook-score", type=int, default=85, help="Minimum score for the opening 2 seconds alone (default: 85).")
     p.add_argument("--allow-below-min", action="store_true", help="Allow lower-scoring clips if none hit --min-virality.")
 
     p.add_argument("--require-keyword", default=None, help="Require this keyword in selected clips.")
@@ -471,12 +472,14 @@ def main() -> None:
         require_keyword=args.require_keyword,
         extra_tags=args.extra_tags,
         model_name=args.gemini_model,
+        min_hook_score=args.min_hook_score,
     )
     if not selected:
-        raise RuntimeError(
-            f"No clips passed virality criteria (min_virality={args.min_virality}). "
-            "Try lowering --min-virality or passing --allow-below-min."
+        print(
+            f"No clips passed the bar (min_virality={args.min_virality}, min_hook_score={args.min_hook_score}). "
+            "Nothing rendered — this span has no truly viral moment."
         )
+        return
 
     _print_viral_summary(selected)
 
@@ -582,6 +585,8 @@ def main() -> None:
                 "caption": caption,
                 "pin": clip.get("pinned_comment", "") or "What did I just watch 😭🔥",
                 "viralityScore": int(clip.get("predicted_score") or 0),
+                "hookScore": int(clip.get("hook_score") or 0),
+                "firstTwoSeconds": clip.get("first_two_seconds", ""),
                 "why": clip.get("why", ""),
                 "onScreen": clip.get("on_screen", ""),
                 "tiktokCaption": tt_cap,
