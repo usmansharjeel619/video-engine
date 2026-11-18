@@ -156,13 +156,17 @@ def _ingest_source(args: argparse.Namespace, work_dir: Path, cookies: Path | Non
                 "--output",
                 str(source_video),
             ]
-            if cookies and cookies.exists():
+            if args.proxy:
+                dvr_cmd.extend(["--proxy", args.proxy])
+            elif cookies and cookies.exists():
                 dvr_cmd.extend(["--cookies", str(cookies)])
             subprocess.run(dvr_cmd, check=True)
             return source_video
 
         dl_cmd = [sys.executable, "-m", "yt_dlp"]
-        if cookies and cookies.exists():
+        if args.proxy:
+            dl_cmd.extend(["--proxy", args.proxy])
+        elif cookies and cookies.exists():
             dl_cmd.extend(["--cookies", str(cookies)])
         dl_cmd.extend(
             [
@@ -361,6 +365,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--start", default=None, help="Optional slice start timestamp (e.g. 00:05:00).")
     p.add_argument("--end", default=None, help="Optional slice end timestamp.")
     p.add_argument("--cookies", type=Path, default=None, help="Path to Netscape cookies.txt for yt-dlp.")
+    p.add_argument("--proxy", default=None, help="Optional HTTP/SOCKS5 proxy for yt-dlp (e.g. socks5h://127.0.0.1:1080).")
 
     p.add_argument("--layout", choices=["split", "center", "blur"], default="split", help="Portrait layout (default: split).")
     p.add_argument("--cam-pos", default="auto", help="Facecam position in split mode: auto, tl, tr, bl, br, center, or x,y,w,h.")

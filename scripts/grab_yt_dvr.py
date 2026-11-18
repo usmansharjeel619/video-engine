@@ -21,8 +21,15 @@ def default_cookies_path() -> Path | None:
     return cand if cand.exists() else None
 
 
-def fetch_fragment(url: str, headers: dict[str, str], sq: int) -> tuple[int, bytes]:
-    req = urllib.request.Request(f"{url}&sq={sq}", headers=headers)
+def fetch_fragment(url: str, headers: dict[str, str], sq: int, proxy: str | None = None) -> tuple[int, bytes]:
+    frag_url = f"{url}&sq={sq}"
+    if proxy:
+        import requests
+
+        resp = requests.get(frag_url, headers=headers, proxies={"http": proxy, "https": proxy}, timeout=25)
+        resp.raise_for_status()
+        return sq, resp.content
+    req = urllib.request.Request(frag_url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as resp:
         return sq, resp.read()
 
@@ -34,11 +41,12 @@ def download_stream_tracks(
     sq_end: int,
     out_path: Path,
     workers: int = 8,
+    proxy: str | None = None,
 ) -> None:
     indices = list(range(sq_start, sq_end + 1))
     chunks: dict[int, bytes] = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = [pool.submit(fetch_fragment, url, headers, sq) for sq in indices]
+        futs = [pool.submit(fetch_fragment, url, headers, sq, proxy) for sq in indices]
         for fut in concurrent.futures.as_completed(futs):
             sq, data = fut.result()
             chunks[sq] = data
@@ -55,11 +63,16 @@ def main() -> None:
     parser.add_argument("--end-min", type=float, default=12.0, help="End minute from stream beginning.")
     parser.add_argument("--output", "-o", type=Path, required=True, help="Output MP4 path.")
     parser.add_argument("--cookies", type=Path, default=None, help="Optional Netscape cookies.txt for yt-dlp.")
+    parser.add_argument("--proxy", default=None, help="Optional HTTP/SOCKS5 proxy URL (e.g. socks5h://127.0.0.1:1080).")
     args = parser.parse_args()
 
+    import os
+    proxy = args.proxy or (os.environ.get("YTDLP_PROXY") or "").strip() or None
     cookies = args.cookies if args.cookies is not None else default_cookies_path()
     cmd = [sys.executable, "-m", "yt_dlp", "--live-from-start"]
-    if cookies and cookies.exists():
+    if proxy:
+        cmd.extend(["--proxy", proxy])
+    if cookies and cookies.exists() and not proxy:
         cmd.extend(["--cookies", str(cookies)])
     cmd.extend(["-j", "-f", "299+140", args.url])
 
@@ -77,8 +90,8 @@ def main() -> None:
     v_tmp = out_mp4.with_suffix(".video.mp4")
     a_tmp = out_mp4.with_suffix(".audio.m4a")
 
-    download_stream_tracks(fmts["299"]["url"], fmts["299"].get("http_headers", {}), sq_start, sq_end, v_tmp)
-    download_stream_tracks(fmts["140"]["url"], fmts["140"].get("http_headers", {}), sq_start, sq_end, a_tmp)
+    download_stream_tracks(fmts["299"]["url"], fmts["299"].get("http_headers", {}), sq_start, sq_end, v_tmp, proxy=proxy)
+    download_stream_tracks(fmts["140"]["url"], fmts["140"].get("http_headers", {}), sq_start, sq_end, a_tmp, proxy=proxy)
 
     print("Muxing clean A/V-locked MP4...")
     subprocess.run(
