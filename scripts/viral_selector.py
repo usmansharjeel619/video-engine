@@ -820,10 +820,14 @@ def analyze_and_select_viral_clips(
 ) -> list[dict[str, Any]]:
     """Run full Pass 1 -> Pass 2 -> Pass 3 Gemini viral moment selection."""
     from google import genai
+    from google.genai import types as genai_types
 
     resolved_key = get_gemini_api_key(api_key)
     resolved_model = get_gemini_model(model_name)
-    client = genai.Client(api_key=resolved_key)
+    client = genai.Client(
+        api_key=resolved_key,
+        http_options=genai_types.HttpOptions(api_version="v1beta"),
+    )
 
     all_words = [
         w for seg in transcript_result.get("segments", []) for w in (seg.get("words") or [])
