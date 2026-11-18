@@ -20,10 +20,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FONT_DIR = REPO_ROOT / "fonts"
 
 HOOK_FONTS: dict[str, tuple[str, float]] = {
-    "montserrat": (str(FONT_DIR / "Montserrat-ExtraBold.ttf"), 0.064),
-    "anton": (str(FONT_DIR / "Anton-Regular.ttf"), 0.080),
-    "archivoblack": (str(FONT_DIR / "ArchivoBlack-Regular.ttf"), 0.062),
-    "serif": (str(FONT_DIR / "NotoSerif-Bold.ttf"), 0.056),
+    "montserrat": (str(FONT_DIR / "Montserrat-ExtraBold.ttf"), 0.056),
+    "anton": (str(FONT_DIR / "Anton-Regular.ttf"), 0.072),
+    "archivoblack": (str(FONT_DIR / "ArchivoBlack-Regular.ttf"), 0.055),
+    "serif": (str(FONT_DIR / "NotoSerif-Bold.ttf"), 0.052),
 }
 
 _FALLBACK_TEXT_FONTS = [
@@ -264,7 +264,7 @@ def _wrap_lines(
 def create_hook_image(
     text: str,
     output_image_path: Path | str,
-    target_width: int = 900,
+    target_width: int = 940,
     style: str = "pill",
     font_name: str | None = None,
     font_scale: float = 1.0,
