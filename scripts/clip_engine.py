@@ -452,29 +452,35 @@ def render_portrait_clip(
     duration = abs_end - abs_start
     ass_escaped = str(ass_path).replace("\\", "/").replace(":", "\\:")
 
-    inputs = ["-i", str(source_video)]
-    next_idx = 1
-
-    # Step 1: Accurate A/V-locked seek + optional cold-open flash-forward + jump-cut concat
-    # Using trim/atrim in filter_complex (after -i) guarantees 0ms A/V drift even on MPEG-TS/DVR streams.
+    # Step 1: Accurate, low-memory A/V-locked seek + optional cold-open flash-forward + jump-cut concat
+    # Give each segment its own coarse-seeked input (-copyts -ss max(0, s_t-4)) so FFmpeg only decodes
+    # ~4s of frames per cut (prevents RAM OOM buffering on long streams while keeping 0ms A/V sync!).
+    inputs: list[str] = []
     filter_parts: list[str] = []
-    if kept_intervals and len(kept_intervals) >= 1:
-        seg_labels = []
-        for k, (ks, ke) in enumerate(kept_intervals):
-            s_t = abs_start + ks
-            e_t = abs_start + ke
-            filter_parts.append(f"[0:v]trim=start={s_t:.3f}:end={e_t:.3f},setpts=PTS-STARTPTS[vseg{k}]")
-            filter_parts.append(f"[0:a]atrim=start={s_t:.3f}:end={e_t:.3f},asetpts=PTS-STARTPTS[aseg{k}]")
-            seg_labels.append(f"[vseg{k}][aseg{k}]")
-        if len(kept_intervals) > 1:
-            filter_parts.append(f"{''.join(seg_labels)}concat=n={len(kept_intervals)}:v=1:a=1[vsrc][asrc]")
-        else:
-            filter_parts.append("[vseg0]null[vsrc];[aseg0]anull[asrc]")
+    next_idx = 0
+
+    segments_to_cut = (
+        [(abs_start + ks, abs_start + ke) for ks, ke in kept_intervals]
+        if kept_intervals
+        else [(abs_start, abs_end)]
+    )
+
+    seg_labels = []
+    for k, (s_t, e_t) in enumerate(segments_to_cut):
+        coarse_s = max(0.0, s_t - 4.0)
+        coarse_t = (e_t - coarse_s) + 1.0
+        inputs.extend(["-copyts", "-ss", f"{coarse_s:.3f}", "-t", f"{coarse_t:.3f}", "-i", str(source_video)])
+        in_i = next_idx
+        next_idx += 1
+        filter_parts.append(f"[{in_i}:v]trim=start={s_t:.3f}:end={e_t:.3f},setpts=PTS-STARTPTS[vseg{k}]")
+        filter_parts.append(f"[{in_i}:a]atrim=start={s_t:.3f}:end={e_t:.3f},asetpts=PTS-STARTPTS[aseg{k}]")
+        seg_labels.append(f"[vseg{k}][aseg{k}]")
+
+    if len(segments_to_cut) > 1:
+        filter_parts.append(f"{''.join(seg_labels)}concat=n={len(segments_to_cut)}:v=1:a=1[vsrc][asrc]")
         v_in, a_in = "[vsrc]", "[asrc]"
     else:
-        filter_parts.append(f"[0:v]trim=start={abs_start:.3f}:end={abs_end:.3f},setpts=PTS-STARTPTS[vsrc]")
-        filter_parts.append(f"[0:a]atrim=start={abs_start:.3f}:end={abs_end:.3f},asetpts=PTS-STARTPTS[asrc]")
-        v_in, a_in = "[vsrc]", "[asrc]"
+        v_in, a_in = "[vseg0]", "[aseg0]"
 
     # Step 2: Portrait framing
     if layout == "blur":
