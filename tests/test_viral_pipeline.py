@@ -64,9 +64,9 @@ class ViralPipelineUnitTests(unittest.TestCase):
             {"word": "just", "start": 25.0, "end": 25.4},
             {"word": "happened", "start": 34.0, "end": 34.8},
         ]
-        s, e = snap_clip_to_words(10.5, 34.5, words, video_duration=120.0, min_duration=15.0, max_duration=45.0)
-        self.assertLess(s, 10.3)
-        self.assertGreater(e, 34.7)
+        s, e = snap_clip_to_words(10.3, 34.5, words, video_duration=120.0, min_duration=15.0, max_duration=45.0)
+        self.assertLess(s, 10.2)
+        self.assertGreater(e, 34.8)
 
         clips = [
             {"start": 10.0, "end": 40.0, "predicted_score": 82},
