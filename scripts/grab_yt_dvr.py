@@ -12,6 +12,7 @@ import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -21,12 +22,25 @@ def default_cookies_path() -> Path | None:
     return cand if cand.exists() else None
 
 
-def fetch_fragment(url: str, headers: dict[str, str], sq: int, proxy: str | None = None) -> tuple[int, bytes]:
-    frag_url = f"{url}&sq={sq}"
-    if proxy:
-        import requests
+def _make_session(proxy: str | None) -> Any:
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
 
-        resp = requests.get(frag_url, headers=headers, proxies={"http": proxy, "https": proxy}, timeout=25)
+    sess = requests.Session()
+    retry = Retry(total=4, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=8, pool_maxsize=8)
+    sess.mount("https://", adapter)
+    sess.mount("http://", adapter)
+    if proxy:
+        sess.proxies = {"http": proxy, "https": proxy}
+    return sess
+
+
+def fetch_fragment(url: str, headers: dict[str, str], sq: int, session: Any = None) -> tuple[int, bytes]:
+    frag_url = f"{url}&sq={sq}"
+    if session is not None:
+        resp = session.get(frag_url, headers=headers, timeout=25)
         resp.raise_for_status()
         return sq, resp.content
     req = urllib.request.Request(frag_url, headers=headers)
@@ -45,8 +59,10 @@ def download_stream_tracks(
 ) -> None:
     indices = list(range(sq_start, sq_end + 1))
     chunks: dict[int, bytes] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = [pool.submit(fetch_fragment, url, headers, sq, proxy) for sq in indices]
+    session = _make_session(proxy) if proxy else None
+    eff_workers = min(workers, 3) if proxy else workers
+    with concurrent.futures.ThreadPoolExecutor(max_workers=eff_workers) as pool:
+        futs = [pool.submit(fetch_fragment, url, headers, sq, session) for sq in indices]
         for fut in concurrent.futures.as_completed(futs):
             sq, data = fut.result()
             chunks[sq] = data
