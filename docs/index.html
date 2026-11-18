@@ -3,246 +3,452 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Expedia x IShowSpeed — Mobile Upload Hub</title>
+<title>Clipper Hub — Mobile Upload Manager</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0b0f19; color:#f1f5f9; margin:0; padding:14px; }
-  h1 { font-size:18px; margin:0 0 12px; color:#facc15; }
-  .card { background:#151c2c; border:1px solid #26314a; border-radius:14px; padding:14px; margin-bottom:16px; }
-  .hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
-  .num { background:#facc15; color:#000; font-weight:800; padding:3px 9px; border-radius:999px; font-size:12px; }
-  .fname { font-size:12px; color:#94a3b8; word-break:break-all; }
-  .dl { display:block; text-align:center; text-decoration:none; padding:11px; border-radius:8px; background:#facc15; color:#000; font-weight:800; font-size:14px; margin-bottom:8px; }
-  .row { background:#0e1422; border:1px solid #222c44; border-radius:10px; padding:10px; margin-top:8px; }
-  .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#38bdf8; margin-bottom:4px; font-weight:700; }
-  .val { font-size:14px; line-height:1.4; margin-bottom:8px; white-space:pre-wrap; }
-  button { width:100%; padding:10px; border:0; border-radius:8px; background:#2563eb; color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
-  button.ok { background:#16a34a; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#090d16; color:#f1f5f9; margin:0; padding:14px; padding-bottom:48px; }
+  h1 { font-size:19px; margin:0 0 10px; color:#facc15; }
+  .tabs { display:flex; gap:8px; margin-bottom:14px; position:sticky; top:0; background:#090d16; padding:8px 0; z-index:10; }
+  .tab { flex:1; padding:10px 8px; border-radius:10px; border:1px solid #26314a; background:#131a2a; color:#cbd5e1; font-weight:700; font-size:13px; cursor:pointer; }
+  .tab.active { background:#2563eb; border-color:#3b82f6; color:#fff; }
+  details.folder { background:#111827; border:1px solid #26314a; border-radius:14px; margin-bottom:14px; overflow:hidden; }
+  details.folder > summary { list-style:none; padding:14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#162033; }
+  .f-title { font-size:16px; font-weight:800; color:#f8fafc; }
+  .f-sub { font-size:12px; color:#94a3b8; margin-top:2px; }
+  .folder-body { padding:10px; }
+  details.batch { background:#0d1320; border:1px solid #1f2a40; border-radius:12px; margin-bottom:10px; overflow:hidden; }
+  details.batch > summary { list-style:none; padding:11px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:14px; color:#38bdf8; }
+  .badge { background:#1e293b; color:#cbd5e1; font-size:11px; padding:3px 8px; border-radius:999px; }
+  .batch-body { padding:10px; }
+  .card { background:#151c2c; border:1px solid #26314a; border-radius:12px; padding:12px; margin-bottom:12px; }
+  .card.is-posted { opacity:0.65; border-color:#16a34a; }
+  .hdr { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+  .num { font-size:12px; color:#94a3b8; word-break:break-all; font-weight:600; }
+  .mark-btn { width:auto; padding:6px 10px; font-size:12px; border-radius:8px; background:#16a34a; color:#fff; border:0; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .card.is-posted .mark-btn { background:#475569; }
+  .hook { font-size:12px; font-weight:700; color:#facc15; margin-bottom:8px; }
+  .dl { display:block; text-align:center; text-decoration:none; padding:10px; border-radius:8px; background:#facc15; color:#000; font-weight:800; font-size:14px; margin-bottom:8px; }
+  .row { background:#0b101b; border:1px solid #222c44; border-radius:9px; padding:9px; margin-top:7px; }
+  .lbl { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#38bdf8; margin-bottom:3px; font-weight:700; }
+  .val { font-size:13px; line-height:1.4; margin-bottom:7px; white-space:pre-wrap; }
+  .row button { width:100%; padding:9px; border:0; border-radius:7px; background:#2563eb; color:#fff; font-weight:700; font-size:13px; cursor:pointer; }
+  .row button.ok { background:#16a34a; }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
-  <h1>Expedia x IShowSpeed — Mobile Upload Hub</h1>
+  <h1>Clipper Hub — Upload Manager</h1>
+  <div class="tabs">
+    <button class="tab active" id="tab-pending" onclick="setFilter('pending')">To Post (<span id="cnt-pending">0</span>)</button>
+    <button class="tab" id="tab-posted" onclick="setFilter('posted')">Posted (<span id="cnt-posted">0</span>)</button>
+    <button class="tab" id="tab-all" onclick="setFilter('all')">All</button>
+  </div>
   
-    <div class="card" id="card-1">
-      <div class="hdr">
-        <span class="num">Clip 1</span>
-        <span class="fname">batch2_clip_01_hudson_japan_reveal.mp4</span>
+    <details class="folder" open>
+      <summary>
+        <div>
+          <div class="f-title">📁 IShowSpeed — GTA 6</div>
+          <div class="f-sub">Split-Screen Facecam + Gameplay · Outclass Hooks</div>
+        </div>
+      </summary>
+      <div class="folder-body">
+        
+      <details class="batch" open>
+        <summary>
+          <span>📦 Batch 1 (First Boot &amp; Viral Moments)</span>
+          <span class="badge" data-batch="f0-b0">4 clips</span>
+        </summary>
+        <div class="batch-body">
+          
+      <div class="card" data-id="f0-b0-c1">
+        <div class="hdr">
+          <span class="num">gta6_viral_01_first_reaction.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f0-b0-c1', this)">Mark Posted</button>
+        </div>
+        <div class="hook">SPEED&#x27;S FIRST REACTION BOOTING UP GTA 6!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch1/gta6_viral_01_first_reaction.mp4" download="gta6_viral_01_first_reaction.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f0-b0-c1">IShowSpeed&#x27;s LIVE First Reaction Booting Up GTA 6 For the First Time! 🤯</div>
+          <button type="button" onclick="cp('t-f0-b0-c1', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f0-b0-c1">IShowSpeed losing his mind seeing GTA 6 boot up for the very first time! 😭🔥 #IShowSpeed #GTA6 #GTAVI #Gaming #Viral</div>
+          <button type="button" onclick="cp('c-f0-b0-c1', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f0-b0-c1">Waited 13 years for this exact moment 😭🔥</div>
+          <button type="button" onclick="cp('p-f0-b0-c1', this)">Copy Comment</button>
+        </div>
       </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_01_hudson_japan_reveal.mp4" download="batch2_clip_01_hudson_japan_reveal.mp4">Download Video (batch2_clip_01_hudson_japan_reveal.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-1">IShowSpeed &amp; Expedia Surprise Fan With Free Trip to Japan! 🇯🇵✈️</div>
-        <button type="button" onclick="cp('t-1', this)">Copy Title</button>
+      <div class="card" data-id="f0-b0-c2">
+        <div class="hdr">
+          <span class="num">gta6_viral_02_first_sight_lucia.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f0-b0-c2', this)">Mark Posted</button>
+        </div>
+        <div class="hook">SPEED LOST HIS MIND SEEING LUCIA IN GTA 6</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch1/gta6_viral_02_first_sight_lucia.mp4" download="gta6_viral_02_first_sight_lucia.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f0-b0-c2">IShowSpeed&#x27;s Insane Reaction Seeing Lucia For the First Time in GTA 6 💀</div>
+          <button type="button" onclick="cp('t-f0-b0-c2', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f0-b0-c2">Bro could not stay calm for 5 seconds seeing Lucia in GTA 6 💀😂 #IShowSpeed #GTA6 #Lucia #GTAVI #Gaming</div>
+          <button type="button" onclick="cp('c-f0-b0-c2', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f0-b0-c2">Speed within 30 seconds of seeing Lucia 😭💀</div>
+          <button type="button" onclick="cp('p-f0-b0-c2', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-1">Expedia &amp; IShowSpeed surprise Hudson with a dream trip to Japan! 🇯🇵✈️ #IShowSpeed #Expedia #Japan #Travel</div>
-        <button type="button" onclick="cp('c-1', this)">Copy Caption</button>
+      <div class="card" data-id="f0-b0-c3">
+        <div class="hdr">
+          <span class="num">gta6_viral_03_graphics_mid_chase.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f0-b0-c3', this)">Mark Posted</button>
+        </div>
+        <div class="hook">SPEED REACTS TO GTA 6 GRAPHICS MID-ROBBERY!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch1/gta6_viral_03_graphics_mid_chase.mp4" download="gta6_viral_03_graphics_mid_chase.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f0-b0-c3">IShowSpeed Screams Over GTA 6 Graphics During First Police Chase! 🚨</div>
+          <button type="button" onclick="cp('t-f0-b0-c3', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f0-b0-c3">Speed literally stopped mid-robbery escape in GTA 6 just to scream at the graphics 🤯🚨 #IShowSpeed #GTA6 #GTAVI #Gaming</div>
+          <button type="button" onclick="cp('c-f0-b0-c3', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f0-b0-c3">Those GTA 6 graphics mid-chase actually look insane 🤯🔥</div>
+          <button type="button" onclick="cp('p-f0-b0-c3', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-1">W Speed &amp; Expedia for changing his life 🙏🇯🇵 Where would you fly?</div>
-        <button type="button" onclick="cp('p-1', this)">Copy Comment</button>
+      <div class="card" data-id="f0-b0-c4">
+        <div class="hdr">
+          <span class="num">gta6_viral_04_lucia_baby_twist.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f0-b0-c4', this)">Mark Posted</button>
+        </div>
+        <div class="hook">WAIT LUCIA HAS A BABY?! CRAZIEST GTA 6 TWIST</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch1/gta6_viral_04_lucia_baby_twist.mp4" download="gta6_viral_04_lucia_baby_twist.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f0-b0-c4">WAIT LUCIA HAS A BABY?! IShowSpeed Reacts to Craziest GTA 6 Twist! 😱</div>
+          <button type="button" onclick="cp('t-f0-b0-c4', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f0-b0-c4">Wait... Lucia left what behind during the robbery?! Craziest GTA 6 twist! 😱👶 #IShowSpeed #GTA6 #Lucia #GTAVI #Gaming</div>
+          <button type="button" onclick="cp('c-f0-b0-c4', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f0-b0-c4">Calling CPS mid-heist is wild 😭💀</div>
+          <button type="button" onclick="cp('p-f0-b0-c4', this)">Copy Comment</button>
+        </div>
       </div>
-    </div>
-    <div class="card" id="card-2">
-      <div class="hdr">
-        <span class="num">Clip 2</span>
-        <span class="fname">batch2_clip_02_hudson_japan_story.mp4</span>
+        </div>
+      </details>
       </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_02_hudson_japan_story.mp4" download="batch2_clip_02_hudson_japan_story.mp4">Download Video (batch2_clip_02_hudson_japan_story.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-2">Why This Fan Wanted Expedia to Send Him to Japan ❤️🇯🇵</div>
-        <button type="button" onclick="cp('t-2', this)">Copy Title</button>
+    </details>
+    <details class="folder" >
+      <summary>
+        <div>
+          <div class="f-title">📁 Expedia x IShowSpeed ($8K Campaign)</div>
+          <div class="f-sub">Include #IShowSpeed · Submit within 30 mins</div>
+        </div>
+      </summary>
+      <div class="folder-body">
+        
+      <details class="batch" >
+        <summary>
+          <span>📦 Batch 2 (10 Clips — Hong Kong &amp; Japan)</span>
+          <span class="badge" data-batch="f1-b0">10 clips</span>
+        </summary>
+        <div class="batch-body">
+          
+      <div class="card" data-id="f1-b0-c1">
+        <div class="hdr">
+          <span class="num">batch2_clip_01_hudson_japan_reveal.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c1', this)">Mark Posted</button>
+        </div>
+        <div class="hook">ISHOWSPEED SURPRISES FAN WITH FREE TRIP TO JAPAN!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_01_hudson_japan_reveal.mp4" download="batch2_clip_01_hudson_japan_reveal.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c1">IShowSpeed &amp; Expedia Surprise Fan With Free Trip to Japan! 🇯🇵✈️</div>
+          <button type="button" onclick="cp('t-f1-b0-c1', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c1">Expedia &amp; IShowSpeed surprise Hudson with a dream trip to Japan! 🇯🇵✈️ #IShowSpeed #Expedia #Japan #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c1', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c1">W Speed &amp; Expedia for changing his life 🙏🇯🇵 Where would you fly?</div>
+          <button type="button" onclick="cp('p-f1-b0-c1', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-2">Hudson shares the wholesome story behind his Expedia dream trip to Japan! #IShowSpeed #Expedia #Japan #Travel</div>
-        <button type="button" onclick="cp('c-2', this)">Copy Caption</button>
+      <div class="card" data-id="f1-b0-c2">
+        <div class="hdr">
+          <span class="num">batch2_clip_02_hudson_japan_story.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c2', this)">Mark Posted</button>
+        </div>
+        <div class="hook">WHY THIS FAN DESERVES A FREE EXPEDIA TRIP TO JAPAN ❤️</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_02_hudson_japan_story.mp4" download="batch2_clip_02_hudson_japan_story.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c2">Why This Fan Wanted Expedia to Send Him to Japan ❤️🇯🇵</div>
+          <button type="button" onclick="cp('t-f1-b0-c2', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c2">Hudson shares the wholesome story behind his Expedia dream trip to Japan! #IShowSpeed #Expedia #Japan #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c2', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c2">Wholesome reason to visit Japan ❤️🇯🇵</div>
+          <button type="button" onclick="cp('p-f1-b0-c2', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-2">Wholesome reason to visit Japan ❤️🇯🇵</div>
-        <button type="button" onclick="cp('p-2', this)">Copy Comment</button>
+      <div class="card" data-id="f1-b0-c3">
+        <div class="hdr">
+          <span class="num">batch2_clip_03_hudson_expedia_intro.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c3', this)">Mark Posted</button>
+        </div>
+        <div class="hook">ISHOWSPEED &amp; EXPEDIA ARE SENDING FANS AROUND THE WORLD!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_03_hudson_expedia_intro.mp4" download="batch2_clip_03_hudson_expedia_intro.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c3">IShowSpeed &amp; Expedia Give Fans the Ultimate Travel Gift 🌍✈️</div>
+          <button type="button" onclick="cp('t-f1-b0-c3', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c3">Expedia teamed up with IShowSpeed to send lucky fans on dream trips like Japan! #IShowSpeed #Expedia #Travel #Japan</div>
+          <button type="button" onclick="cp('c-f1-b0-c3', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c3">If Expedia paid for your flight anywhere, where are you going? ✈️👇</div>
+          <button type="button" onclick="cp('p-f1-b0-c3', this)">Copy Comment</button>
+        </div>
       </div>
-    </div>
-    <div class="card" id="card-3">
-      <div class="hdr">
-        <span class="num">Clip 3</span>
-        <span class="fname">batch2_clip_03_hudson_expedia_intro.mp4</span>
+      <div class="card" data-id="f1-b0-c4">
+        <div class="hdr">
+          <span class="num">batch2_clip_04_worldcup_fullcircle.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c4', this)">Mark Posted</button>
+        </div>
+        <div class="hook">FROM WATCHING SPEED AT THE WORLD CUP TO A FREE JAPAN TRIP!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_04_worldcup_fullcircle.mp4" download="batch2_clip_04_worldcup_fullcircle.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c4">Full Circle Moment: Expedia Sends IShowSpeed Fan to Japan! 🇯🇵</div>
+          <button type="button" onclick="cp('t-f1-b0-c4', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c4">From seeing IShowSpeed at the World Cup to winning an Expedia trip to Japan! #IShowSpeed #Expedia #Japan #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c4', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c4">Full circle moments hit different 🔥🇯🇵</div>
+          <button type="button" onclick="cp('p-f1-b0-c4', this)">Copy Comment</button>
+        </div>
       </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_03_hudson_expedia_intro.mp4" download="batch2_clip_03_hudson_expedia_intro.mp4">Download Video (batch2_clip_03_hudson_expedia_intro.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-3">IShowSpeed &amp; Expedia Give Fans the Ultimate Travel Gift 🌍✈️</div>
-        <button type="button" onclick="cp('t-3', this)">Copy Title</button>
+      <div class="card" data-id="f1-b0-c5">
+        <div class="hdr">
+          <span class="num">batch2_clip_05_never_left_country.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c5', this)">Mark Posted</button>
+        </div>
+        <div class="hook">HE&#x27;S NEVER LEFT THE COUNTRY... UNTIL EXPEDIA &amp; SPEED CALLED!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_05_never_left_country.mp4" download="batch2_clip_05_never_left_country.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c5">He&#x27;s Never Left the Country—Expedia &amp; IShowSpeed Ask His Dream Trip!</div>
+          <button type="button" onclick="cp('t-f1-b0-c5', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c5">Anthony has never left the country—now Expedia &amp; IShowSpeed ask where he wants to go: Hong Kong! 🇭🇰 #IShowSpeed #Expedia #HongKong #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c5', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c5">First time ever leaving the country to Hong Kong 🇭🇰🙏</div>
+          <button type="button" onclick="cp('p-f1-b0-c5', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-3">Expedia teamed up with IShowSpeed to send lucky fans on dream trips like Japan! #IShowSpeed #Expedia #Travel #Japan</div>
-        <button type="button" onclick="cp('c-3', this)">Copy Caption</button>
+      <div class="card" data-id="f1-b0-c6">
+        <div class="hdr">
+          <span class="num">batch2_clip_06_10k_shock_reaction.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c6', this)">Mark Posted</button>
+        </div>
+        <div class="hook">WAIT FOR HIS REACTION TO WINNING $10,000 FROM EXPEDIA! 🤯</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_06_10k_shock_reaction.mp4" download="batch2_clip_06_10k_shock_reaction.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c6">Fan&#x27;s Reaction to Winning $10,000 From Expedia for Hong Kong! 🤯</div>
+          <button type="button" onclick="cp('t-f1-b0-c6', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c6">Wait for his reaction when Expedia &amp; IShowSpeed give him $10,000 for Hong Kong! 🇭🇰💸 #IShowSpeed #Expedia #HongKong #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c6', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c6">His jaw literally dropped 😭💸🇭🇰</div>
+          <button type="button" onclick="cp('p-f1-b0-c6', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-3">If Expedia paid for your flight anywhere, where are you going? ✈️👇</div>
-        <button type="button" onclick="cp('p-3', this)">Copy Comment</button>
+      <div class="card" data-id="f1-b0-c7">
+        <div class="hdr">
+          <span class="num">batch2_clip_07_college_student_call.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c7', this)">Mark Posted</button>
+        </div>
+        <div class="hook">COLLEGE STUDENT GETS LIFE-CHANGING CALL FROM ISHOWSPEED!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_07_college_student_call.mp4" download="batch2_clip_07_college_student_call.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c7">College Baseball Player Gets Surprise Call From IShowSpeed &amp; Expedia!</div>
+          <button type="button" onclick="cp('t-f1-b0-c7', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c7">College student Hudson gets a surprise call from IShowSpeed &amp; Expedia about traveling to Japan! 🇯🇵 #IShowSpeed #Expedia #Japan #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c7', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c7">Imagine getting a FaceTime like this mid-day 😭🔥</div>
+          <button type="button" onclick="cp('p-f1-b0-c7', this)">Copy Comment</button>
+        </div>
       </div>
-    </div>
-    <div class="card" id="card-4">
-      <div class="hdr">
-        <span class="num">Clip 4</span>
-        <span class="fname">batch2_clip_04_worldcup_fullcircle.mp4</span>
+      <div class="card" data-id="f1-b0-c8">
+        <div class="hdr">
+          <span class="num">batch2_clip_08_how_winners_picked.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c8', this)">Mark Posted</button>
+        </div>
+        <div class="hook">HOW ISHOWSPEED &amp; EXPEDIA PICKED THE WINNERS FOR JAPAN!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_08_how_winners_picked.mp4" download="batch2_clip_08_how_winners_picked.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c8">How IShowSpeed &amp; Expedia Chose Fans for Dream Trips to Japan ✈️</div>
+          <button type="button" onclick="cp('t-f1-b0-c8', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c8">IShowSpeed explains how he &amp; Expedia read thousands of fan stories and sent Hudson to Japan! 🇯🇵 #IShowSpeed #Expedia #Japan #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c8', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c8">W Expedia for actually reading the fan stories 🙏✈️</div>
+          <button type="button" onclick="cp('p-f1-b0-c8', this)">Copy Comment</button>
+        </div>
       </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_04_worldcup_fullcircle.mp4" download="batch2_clip_04_worldcup_fullcircle.mp4">Download Video (batch2_clip_04_worldcup_fullcircle.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-4">Full Circle Moment: Expedia Sends IShowSpeed Fan to Japan! 🇯🇵</div>
-        <button type="button" onclick="cp('t-4', this)">Copy Title</button>
+      <div class="card" data-id="f1-b0-c9">
+        <div class="hdr">
+          <span class="num">batch2_clip_09_cantonese_check.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c9', this)">Mark Posted</button>
+        </div>
+        <div class="hook">SPEED THOUGHT HE WAS LYING ABOUT SPEAKING CANTONESE 😂</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_09_cantonese_check.mp4" download="batch2_clip_09_cantonese_check.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c9">IShowSpeed Checks If $10K Expedia Winner Speaks Cantonese for Hong Kong!</div>
+          <button type="button" onclick="cp('t-f1-b0-c9', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c9">Speed thought he was capping about speaking Cantonese before winning $10,000 from Expedia for Hong Kong! 🇭🇰😂 #IShowSpeed #Expedia #HongKong #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c9', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c9">Bro passed the Cantonese test on the spot 💀🇭🇰</div>
+          <button type="button" onclick="cp('p-f1-b0-c9', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-4">From seeing IShowSpeed at the World Cup to winning an Expedia trip to Japan! #IShowSpeed #Expedia #Japan #Travel</div>
-        <button type="button" onclick="cp('c-4', this)">Copy Caption</button>
+      <div class="card" data-id="f1-b0-c10">
+        <div class="hdr">
+          <span class="num">batch2_clip_10_full_hongkong_arc.mp4</span>
+          <button type="button" class="mark-btn" onclick="togglePosted('f1-b0-c10', this)">Mark Posted</button>
+        </div>
+        <div class="hook">NEVER LEFT THE USA -&gt; EXPEDIA GIVES HIM $10,000 FOR HONG KONG!</div>
+        <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_10_full_hongkong_arc.mp4" download="batch2_clip_10_full_hongkong_arc.mp4">Download Video</a>
+        <div class="row">
+          <div class="lbl">Title</div>
+          <div class="val" id="t-f1-b0-c10">Never Left the Country -&gt; Expedia Gives Him $10,000 for Hong Kong!</div>
+          <button type="button" onclick="cp('t-f1-b0-c10', this)">Copy Title</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Caption &amp; Hashtags</div>
+          <div class="val" id="c-f1-b0-c10">Never been out of the country in his life—Expedia &amp; IShowSpeed just gave him $10,000 to visit Hong Kong! 🇭🇰✈️ #IShowSpeed #Expedia #HongKong #Travel</div>
+          <button type="button" onclick="cp('c-f1-b0-c10', this)">Copy Caption</button>
+        </div>
+        <div class="row">
+          <div class="lbl">Pinned Comment</div>
+          <div class="val" id="p-f1-b0-c10">Best stream moment of the year 🇭🇰✈️🔥</div>
+          <button type="button" onclick="cp('p-f1-b0-c10', this)">Copy Comment</button>
+        </div>
       </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-4">Full circle moments hit different 🔥🇯🇵</div>
-        <button type="button" onclick="cp('p-4', this)">Copy Comment</button>
+        </div>
+      </details>
       </div>
-    </div>
-    <div class="card" id="card-5">
-      <div class="hdr">
-        <span class="num">Clip 5</span>
-        <span class="fname">batch2_clip_05_never_left_country.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_05_never_left_country.mp4" download="batch2_clip_05_never_left_country.mp4">Download Video (batch2_clip_05_never_left_country.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-5">He&#x27;s Never Left the Country—Expedia &amp; IShowSpeed Ask His Dream Trip!</div>
-        <button type="button" onclick="cp('t-5', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-5">Anthony has never left the country—now Expedia &amp; IShowSpeed ask where he wants to go: Hong Kong! 🇭🇰 #IShowSpeed #Expedia #HongKong #Travel</div>
-        <button type="button" onclick="cp('c-5', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-5">First time ever leaving the country to Hong Kong 🇭🇰🙏</div>
-        <button type="button" onclick="cp('p-5', this)">Copy Comment</button>
-      </div>
-    </div>
-    <div class="card" id="card-6">
-      <div class="hdr">
-        <span class="num">Clip 6</span>
-        <span class="fname">batch2_clip_06_10k_shock_reaction.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_06_10k_shock_reaction.mp4" download="batch2_clip_06_10k_shock_reaction.mp4">Download Video (batch2_clip_06_10k_shock_reaction.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-6">Fan&#x27;s Reaction to Winning $10,000 From Expedia for Hong Kong! 🤯</div>
-        <button type="button" onclick="cp('t-6', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-6">Wait for his reaction when Expedia &amp; IShowSpeed give him $10,000 for Hong Kong! 🇭🇰💸 #IShowSpeed #Expedia #HongKong #Travel</div>
-        <button type="button" onclick="cp('c-6', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-6">His jaw literally dropped 😭💸🇭🇰</div>
-        <button type="button" onclick="cp('p-6', this)">Copy Comment</button>
-      </div>
-    </div>
-    <div class="card" id="card-7">
-      <div class="hdr">
-        <span class="num">Clip 7</span>
-        <span class="fname">batch2_clip_07_college_student_call.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_07_college_student_call.mp4" download="batch2_clip_07_college_student_call.mp4">Download Video (batch2_clip_07_college_student_call.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-7">College Baseball Player Gets Surprise Call From IShowSpeed &amp; Expedia!</div>
-        <button type="button" onclick="cp('t-7', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-7">College student Hudson gets a surprise call from IShowSpeed &amp; Expedia about traveling to Japan! 🇯🇵 #IShowSpeed #Expedia #Japan #Travel</div>
-        <button type="button" onclick="cp('c-7', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-7">Imagine getting a FaceTime like this mid-day 😭🔥</div>
-        <button type="button" onclick="cp('p-7', this)">Copy Comment</button>
-      </div>
-    </div>
-    <div class="card" id="card-8">
-      <div class="hdr">
-        <span class="num">Clip 8</span>
-        <span class="fname">batch2_clip_08_how_winners_picked.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_08_how_winners_picked.mp4" download="batch2_clip_08_how_winners_picked.mp4">Download Video (batch2_clip_08_how_winners_picked.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-8">How IShowSpeed &amp; Expedia Chose Fans for Dream Trips to Japan ✈️</div>
-        <button type="button" onclick="cp('t-8', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-8">IShowSpeed explains how he &amp; Expedia read thousands of fan stories and sent Hudson to Japan! 🇯🇵 #IShowSpeed #Expedia #Japan #Travel</div>
-        <button type="button" onclick="cp('c-8', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-8">W Expedia for actually reading the fan stories 🙏✈️</div>
-        <button type="button" onclick="cp('p-8', this)">Copy Comment</button>
-      </div>
-    </div>
-    <div class="card" id="card-9">
-      <div class="hdr">
-        <span class="num">Clip 9</span>
-        <span class="fname">batch2_clip_09_cantonese_check.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_09_cantonese_check.mp4" download="batch2_clip_09_cantonese_check.mp4">Download Video (batch2_clip_09_cantonese_check.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-9">IShowSpeed Checks If $10K Expedia Winner Speaks Cantonese for Hong Kong!</div>
-        <button type="button" onclick="cp('t-9', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-9">Speed thought he was capping about speaking Cantonese before winning $10,000 from Expedia for Hong Kong! 🇭🇰😂 #IShowSpeed #Expedia #HongKong #Travel</div>
-        <button type="button" onclick="cp('c-9', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-9">Bro passed the Cantonese test on the spot 💀🇭🇰</div>
-        <button type="button" onclick="cp('p-9', this)">Copy Comment</button>
-      </div>
-    </div>
-    <div class="card" id="card-10">
-      <div class="hdr">
-        <span class="num">Clip 10</span>
-        <span class="fname">batch2_clip_10_full_hongkong_arc.mp4</span>
-      </div>
-      <a class="dl" href="https://github.com/usmansharjeel619/video-engine/releases/download/batch-2/batch2_clip_10_full_hongkong_arc.mp4" download="batch2_clip_10_full_hongkong_arc.mp4">Download Video (batch2_clip_10_full_hongkong_arc.mp4)</a>
-      <div class="row">
-        <div class="lbl">Title</div>
-        <div class="val" id="t-10">Never Left the Country -&gt; Expedia Gives Him $10,000 for Hong Kong!</div>
-        <button type="button" onclick="cp('t-10', this)">Copy Title</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Caption &amp; Hashtags</div>
-        <div class="val" id="c-10">Never been out of the country in his life—Expedia &amp; IShowSpeed just gave him $10,000 to visit Hong Kong! 🇭🇰✈️ #IShowSpeed #Expedia #HongKong #Travel</div>
-        <button type="button" onclick="cp('c-10', this)">Copy Caption</button>
-      </div>
-      <div class="row">
-        <div class="lbl">Pinned Comment</div>
-        <div class="val" id="p-10">Best stream moment of the year 🇭🇰✈️🔥</div>
-        <button type="button" onclick="cp('p-10', this)">Copy Comment</button>
-      </div>
-    </div>
+    </details>
 <script>
+const KEY = 'clipper_posted_v1';
+let filterMode = 'pending';
+function getPosted() {
+  try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; }
+}
+function savePosted(map) {
+  localStorage.setItem(KEY, JSON.stringify(map));
+}
+function togglePosted(id) {
+  const map = getPosted();
+  if (map[id]) delete map[id]; else map[id] = Date.now();
+  savePosted(map);
+  renderState();
+}
+function setFilter(mode) {
+  filterMode = mode;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + mode).classList.add('active');
+  renderState();
+}
+function renderState() {
+  const map = getPosted();
+  let pending = 0, posted = 0;
+  document.querySelectorAll('.card').forEach(card => {
+    const id = card.dataset.id;
+    const isP = !!map[id];
+    const btn = card.querySelector('.mark-btn');
+    if (isP) {
+      posted++;
+      card.classList.add('is-posted');
+      btn.innerText = 'Restore';
+    } else {
+      pending++;
+      card.classList.remove('is-posted');
+      btn.innerText = '✓ Mark Posted & Hide';
+    }
+    const show = (filterMode === 'all') || (filterMode === 'pending' && !isP) || (filterMode === 'posted' && isP);
+    card.classList.toggle('hidden', !show);
+  });
+  document.getElementById('cnt-pending').innerText = pending;
+  document.getElementById('cnt-posted').innerText = posted;
+}
 function cp(id, btn) {
   const txt = document.getElementById(id).innerText;
   const done = () => {
@@ -269,6 +475,7 @@ function fallbackCopy(txt, done) {
   document.body.removeChild(ta);
   done();
 }
+renderState();
 </script>
 </body>
 </html>
