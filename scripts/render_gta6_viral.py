@@ -11,7 +11,7 @@ from clip_engine import (
     render_portrait_clip,
 )
 
-BASE = Path(r"D:\Freelance Projects\video-engine\output\gta6-ishowspeed")
+BASE = Path(__file__).resolve().parent.parent / "output" / "gta6-ishowspeed"
 WORK = BASE / ".work"
 SOURCE = WORK / "stream_boot_11_25m.mp4"
 TRANSCRIPT = json.loads((WORK / "boot_11_25m_transcript.json").read_text(encoding="utf-8"))
