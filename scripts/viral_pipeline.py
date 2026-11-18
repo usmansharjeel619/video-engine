@@ -35,6 +35,7 @@ from clip_engine import (
     find_peak_offset,
     parse_timestamp,
     prepend_flash_hook,
+    remap_time_to_intervals,
     render_portrait_clip,
     transcribe_audio,
 )
@@ -541,6 +542,7 @@ def main() -> None:
             source_video=source_video,
             sample_time=abs_start + 1.0,
         )
+        peak_offset_out = remap_time_to_intervals(peak_offset, kept_intervals)
 
         print(
             f"Rendering {idx}/{len(selected)}: {mp4_path.name} "
@@ -557,7 +559,7 @@ def main() -> None:
             cam_pos=args.cam_pos,
             kept_intervals=kept_intervals,
             use_sfx=not args.no_sfx,
-            peak_offset=peak_offset,
+            peak_offset=peak_offset_out,
             hook_png=hook_png,
             hook_y=hook_y,
             hook_duration=args.hook_duration,

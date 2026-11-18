@@ -26,6 +26,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SFX_DIR = REPO_ROOT / "sfx"
+YUNET_MODEL_PATH = REPO_ROOT / "models" / "face_detection_yunet_2023mar.onnx"
 
 
 def default_cookies_path() -> Path | None:
@@ -314,10 +315,68 @@ def prepend_flash_hook(
     return combined, retimed
 
 
+def remap_time_to_intervals(rel_t: float, intervals: list[tuple[float, float]] | None) -> float:
+    """Remap a relative source timestamp into the concatenated jump-cut output timeline."""
+    if not intervals:
+        return round(max(0.5, float(rel_t)), 2)
+
+    # Prefer matches inside the main story segments (skipping a prepended cold-open at idx 0 if >1 interval)
+    search_order = list(enumerate(intervals))
+    if len(intervals) > 1:
+        search_order = search_order[1:] + search_order[:1]
+
+    acc_starts: list[float] = []
+    cur = 0.0
+    for s, e in intervals:
+        acc_starts.append(cur)
+        cur += max(0.0, e - s)
+
+    for idx, (s, e) in search_order:
+        if s <= rel_t <= e:
+            return round(max(0.5, acc_starts[idx] + (rel_t - s)), 2)
+
+    # Nearest main interval edge fallback
+    best_out = max(0.5, cur * 0.5)
+    best_dist = float("inf")
+    for idx, (s, e) in search_order:
+        clamped = min(max(rel_t, s), e)
+        dist = abs(rel_t - clamped)
+        if dist < best_dist:
+            best_dist = dist
+            best_out = acc_starts[idx] + (clamped - s)
+    return round(max(0.5, min(max(0.8, cur - 0.5), best_out)), 2)
+
+
+def _detect_faces_normalized(frame: Any) -> list[tuple[float, float, float, float, float]]:
+    """Return [(cx, cy, w_norm, h_norm, conf), ...] using YuNet (OpenCV 5+) or Haar cascade."""
+    import cv2
+
+    fh, fw = frame.shape[:2]
+    results: list[tuple[float, float, float, float, float]] = []
+    if YUNET_MODEL_PATH.exists() and hasattr(cv2, "FaceDetectorYN"):
+        det = cv2.FaceDetectorYN.create(str(YUNET_MODEL_PATH), "", (fw, fh), 0.55, 0.3, 5000)
+        _, faces = det.detect(frame)
+        if faces is not None:
+            for f in faces:
+                fx, fy, f_w, f_h, conf = float(f[0]), float(f[1]), float(f[2]), float(f[3]), float(f[-1])
+                results.append(((fx + f_w / 2.0) / fw, (fy + f_h / 2.0) / fh, f_w / fw, f_h / fh, conf))
+            if results:
+                return results
+
+    if hasattr(cv2, "CascadeClassifier"):
+        cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = cascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=5, minSize=(45, 45))
+        for (fx, fy, f_w, f_h) in faces:
+            results.append(((fx + f_w / 2.0) / fw, (fy + f_h / 2.0) / fh, f_w / fw, f_h / fh, 0.7))
+    return results
+
+
 def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> tuple[float, float, float, float]:
     """
     Return normalized (x, y, w, h) facecam crop rectangle for 16:9 -> 1080x700 top panel.
-    Supports 'auto' (via OpenCV face detection) or presets: tl, tr, bl, br, center.
+    Supports 'auto' (via YuNet/OpenCV face detection prioritizing streamer edge webcams)
+    or presets: tl, tr, bl, br, center, or explicit x,y,w,h.
     """
     presets: dict[str, tuple[float, float, float, float]] = {
         "tl": (0.0, 0.0, 0.34, 0.38),
@@ -336,43 +395,41 @@ def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> 
     try:
         import cv2
 
-        cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
         cap = cv2.VideoCapture(str(source_video))
-        detected = None
+        all_faces: list[tuple[float, float, float, float, float]] = []
         for offset_s in (0.0, 2.0, 5.0):
             cap.set(cv2.CAP_PROP_POS_MSEC, max(0.0, sample_time + offset_s) * 1000.0)
             ok, frame = cap.read()
             if not ok or frame is None:
                 continue
-            fh, fw = frame.shape[:2]
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = cascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=5, minSize=(45, 45))
-            if len(faces) > 0:
-                detected = (max(faces, key=lambda b: b[2] * b[3]), fw, fh)
+            found = _detect_faces_normalized(frame)
+            if found:
+                all_faces = found
                 break
         cap.release()
-        if detected is None:
-            return presets["bl"]
-
-        (fx, fy, f_w, f_h), fw, fh = detected
-        cx = (fx + f_w / 2.0) / fw
-        cy = (fy + f_h / 2.0) / fh
-
-        if cx < 0.38 and cy < 0.42:
+        if not all_faces:
             return presets["tl"]
-        if cx > 0.62 and cy < 0.42:
-            return presets["tr"]
-        if cx < 0.38 and cy > 0.58:
-            return presets["bl"]
-        if cx > 0.62 and cy > 0.58:
-            return presets["br"]
-        box_w = 0.48
-        box_h = 0.55
-        bx = max(0.0, min(1.0 - box_w, cx - box_w / 2.0))
-        by = max(0.0, min(1.0 - box_h, cy - box_h / 2.0))
-        return (round(bx, 3), round(by, 3), box_w, box_h)
+
+        # Prioritize edge/perimeter streamer webcams over in-game characters near screen center
+        edge_faces = [
+            f for f in all_faces
+            if (f[0] < 0.32 or f[0] > 0.68 or f[1] < 0.30 or f[1] > 0.72) and f[3] < 0.18
+        ]
+        cx, cy, _, fh_n, _ = max(edge_faces or all_faces, key=lambda f: f[4])
+
+        # Tight 16:10 webcam window around detected face center; snaps cleanly to left/right borders
+        box_w = max(0.22, min(0.34, fh_n * 3.8))
+        box_h = max(0.24, min(0.38, box_w * 1.1))
+        if cx < 0.14:
+            bx = 0.0
+        elif cx > 0.86:
+            bx = 1.0 - box_w
+        else:
+            bx = max(0.0, min(1.0 - box_w, cx - box_w / 2.0))
+        by = max(0.0, min(1.0 - box_h, cy - box_h * 0.42))
+        return (round(bx, 3), round(by, 3), round(box_w, 3), round(box_h, 3))
     except Exception:
-        return presets["bl"]
+        return presets["tl"]
 
 
 def build_kinetic_ass(
@@ -547,12 +604,12 @@ def render_portrait_clip(
         h_dur = max(0.8, float(hook_duration))
         fade_st = max(0.4, h_dur - 0.35)
         filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[with_caps]")
-        inputs.extend(["-loop", "1", "-t", f"{h_dur:.2f}", "-i", str(hook_png)])
+        inputs.extend(["-loop", "1", "-framerate", "30", "-i", str(hook_png)])
         hook_idx = next_idx
         next_idx += 1
         filter_parts.append(f"[{hook_idx}:v]format=rgba,fade=t=out:st={fade_st:.2f}:d=0.35:alpha=1[hook_ov]")
         filter_parts.append(
-            f"[with_caps][hook_ov]overlay=(W-w)/2:{int(hook_y)}:enable='between(t,0,{h_dur:.2f})':eof_action=pass[v]"
+            f"[with_caps][hook_ov]overlay=(W-w)/2:{int(hook_y)}:enable='between(t,0,{h_dur:.2f})':shortest=1[v]"
         )
     else:
         filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[v]")

@@ -384,7 +384,6 @@ def _detect_face_band_y(source_video: Path, sample_time: float) -> tuple[float, 
     try:
         import cv2
 
-        cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
         cap = cv2.VideoCapture(str(source_video))
         cap.set(cv2.CAP_PROP_POS_MSEC, max(0.0, sample_time) * 1000.0)
         ok, frame = cap.read()
@@ -392,15 +391,26 @@ def _detect_face_band_y(source_video: Path, sample_time: float) -> tuple[float, 
         if not ok or frame is None:
             return None
         fh, fw = frame.shape[:2]
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = cascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=5, minSize=(45, 45))
-        if len(faces) == 0:
-            return None
-        _, fy, _, f_h = max(faces, key=lambda b: b[2] * b[3])
-        # Grow upward slightly to protect forehead/hair in vertical center crop
-        top_norm = max(0.0, (fy - f_h * 0.35) / fh)
-        bot_norm = min(1.0, (fy + f_h) / fh)
-        return (top_norm * 1920.0, bot_norm * 1920.0)
+        yunet = REPO_ROOT / "models" / "face_detection_yunet_2023mar.onnx"
+        if yunet.exists() and hasattr(cv2, "FaceDetectorYN"):
+            det = cv2.FaceDetectorYN.create(str(yunet), "", (fw, fh), 0.55, 0.3, 5000)
+            _, faces = det.detect(frame)
+            if faces is not None and len(faces) > 0:
+                best = max(faces, key=lambda b: float(b[2]) * float(b[3]))
+                fy, f_h = float(best[1]), float(best[3])
+                top_norm = max(0.0, (fy - f_h * 0.35) / fh)
+                bot_norm = min(1.0, (fy + f_h) / fh)
+                return (top_norm * 1920.0, bot_norm * 1920.0)
+        if hasattr(cv2, "CascadeClassifier"):
+            cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = cascade.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=5, minSize=(45, 45))
+            if len(faces) > 0:
+                _, fy, _, f_h = max(faces, key=lambda b: b[2] * b[3])
+                top_norm = max(0.0, (fy - f_h * 0.35) / fh)
+                bot_norm = min(1.0, (fy + f_h) / fh)
+                return (top_norm * 1920.0, bot_norm * 1920.0)
+        return None
     except Exception:
         return None
 
