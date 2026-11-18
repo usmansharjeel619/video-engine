@@ -13,6 +13,13 @@ import sys
 import urllib.request
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def default_cookies_path() -> Path | None:
+    cand = REPO_ROOT / ".creds" / "youtube_cookies.txt"
+    return cand if cand.exists() else None
+
 
 def fetch_fragment(url: str, headers: dict[str, str], sq: int) -> tuple[int, bytes]:
     req = urllib.request.Request(f"{url}&sq={sq}", headers=headers)
@@ -47,13 +54,17 @@ def main() -> None:
     parser.add_argument("--start-min", type=float, default=0.0, help="Start minute from stream beginning.")
     parser.add_argument("--end-min", type=float, default=12.0, help="End minute from stream beginning.")
     parser.add_argument("--output", "-o", type=Path, required=True, help="Output MP4 path.")
+    parser.add_argument("--cookies", type=Path, default=None, help="Optional Netscape cookies.txt for yt-dlp.")
     args = parser.parse_args()
 
+    cookies = args.cookies if args.cookies is not None else default_cookies_path()
+    cmd = [sys.executable, "-m", "yt_dlp", "--live-from-start"]
+    if cookies and cookies.exists():
+        cmd.extend(["--cookies", str(cookies)])
+    cmd.extend(["-j", "-f", "299+140", args.url])
+
     print(f"Resolving DASH DVR streams for {args.url}...")
-    raw = subprocess.check_output(
-        [sys.executable, "-m", "yt_dlp", "--live-from-start", "-j", "-f", "299+140", args.url],
-        stderr=subprocess.DEVNULL,
-    )
+    raw = subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
     info = json.loads(raw)
     fmts = {f["format_id"]: f for f in info["requested_formats"]}
 

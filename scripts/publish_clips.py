@@ -51,6 +51,20 @@ def publish_upload_post(
     )
 
 
+def fetch_postiz_integrations(base_url: str, api_key: str) -> list[dict[str, Any]]:
+    """Fetch connected social integrations from Postiz public API."""
+    req = urllib.request.Request(
+        f"{base_url.rstrip('/')}/api/public/v1/integrations",
+        headers={"Authorization": api_key},
+        method="GET",
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        if isinstance(data, list):
+            return data
+        return list(data.get("integrations") or [])
+
+
 def publish_postiz(
     video_path: Path,
     caption: str,
@@ -137,7 +151,17 @@ def main() -> None:
     results = []
     for item in manifest:
         video_path = Path(item["path"])
-        caption = build_caption(item.get("transcript", ""), args.tags)
+        preferred = (
+            item.get("tiktokCaption")
+            or item.get("instagramCaption")
+            or item.get("caption")
+            or item.get("youtubeTitle")
+            or item.get("title")
+        )
+        if preferred and str(preferred).strip():
+            caption = str(preferred).strip()
+        else:
+            caption = build_caption(item.get("transcript", ""), args.tags)
 
         if args.dry_run:
             print(f"[DRY RUN] {video_path.name} -> {args.platforms}\n{caption}\n")
@@ -149,9 +173,15 @@ def main() -> None:
             user = os.environ["UPLOAD_POST_USER"]
             res = publish_upload_post(video_path, caption, args.platforms, api_key, user)
         elif provider == "postiz":
-            base_url = os.getenv("POSTIZ_BASE_URL", "http://localhost:5000")
+            base_url = os.getenv("POSTIZ_BASE_URL") or os.getenv("POSTIZ_URL") or "http://127.0.0.1:4008"
             api_key = os.environ["POSTIZ_API_KEY"]
-            ids = [i.strip() for i in os.environ["POSTIZ_INTEGRATION_IDS"].split(",") if i.strip()]
+            raw_ids = os.getenv("POSTIZ_INTEGRATION_IDS", "")
+            ids = [i.strip() for i in raw_ids.split(",") if i.strip()]
+            if not ids:
+                integrations = fetch_postiz_integrations(base_url, api_key)
+                ids = [str(it["id"]) for it in integrations if it.get("id")]
+            if not ids:
+                raise RuntimeError("No Postiz integrations found. Connect social accounts in Postiz first.")
             res = publish_postiz(video_path, caption, base_url, api_key, ids)
         else:
             raise ValueError(f"Unsupported PUBLISH_PROVIDER: {provider}")

@@ -10,15 +10,20 @@ def build_card(item: dict, uid: str, base_url: str) -> str:
     p = html.escape(item["pin"])
     fname = html.escape(item["clip"])
     hook = html.escape(item.get("hook", ""))
+    score = item.get("viralityScore")
+    why = html.escape(item.get("why", ""))
     dl_url = f"{base_url.rstrip('/')}/{fname}" if base_url else fname
+    score_html = f'<span class="vscore">🔥 {int(score)}/100</span>' if score is not None else ""
     hook_html = f'<div class="hook">{hook}</div>' if hook else ""
+    why_html = f'<div class="why">{why}</div>' if why else ""
     return f"""
       <div class="card" data-id="{uid}">
         <div class="hdr">
-          <span class="num">{fname}</span>
+          <span class="num">{fname} {score_html}</span>
           <button type="button" class="mark-btn" onclick="togglePosted('{uid}', this)">Mark Posted</button>
         </div>
         {hook_html}
+        {why_html}
         <a class="dl" href="{dl_url}" download="{fname}">Download Video</a>
         <div class="row">
           <div class="lbl">Title</div>
@@ -114,7 +119,9 @@ def main() -> None:
   .num {{ font-size:12px; color:#94a3b8; word-break:break-all; font-weight:600; }}
   .mark-btn {{ width:auto; padding:6px 10px; font-size:12px; border-radius:8px; background:#16a34a; color:#fff; border:0; font-weight:700; cursor:pointer; white-space:nowrap; }}
   .card.is-posted .mark-btn {{ background:#475569; }}
-  .hook {{ font-size:12px; font-weight:700; color:#facc15; margin-bottom:8px; }}
+  .vscore {{ display:inline-block; background:#7c2d12; color:#fed7aa; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:800; margin-left:4px; }}
+  .hook {{ font-size:12px; font-weight:700; color:#facc15; margin-bottom:5px; }}
+  .why {{ font-size:11px; color:#94a3b8; margin-bottom:8px; line-height:1.35; }}
   .dl {{ display:block; text-align:center; text-decoration:none; padding:10px; border-radius:8px; background:#facc15; color:#000; font-weight:800; font-size:14px; margin-bottom:8px; }}
   .row {{ background:#0b101b; border:1px solid #222c44; border-radius:9px; padding:9px; margin-top:7px; }}
   .lbl {{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#38bdf8; margin-bottom:3px; font-weight:700; }}

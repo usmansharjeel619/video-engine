@@ -33,6 +33,19 @@ description: >-
 - **Strategic Meme SFX (`--sfx`):** Max **1–2 sound cues per 30s clip** (`whoosh` at 0.0s hook entrance, `boom` on the single peak shock/fail moment). Never spam SFX.
 - **Audio Target:** Normalize final mix to `-14 LUFS` (`loudnorm=I=-14:TP=-1.5:LRA=11`).
 
+## 3.5 Unified End-to-End Pipeline (`scripts/viral_pipeline.py`)
+Run **1 command on the cloud server (`ubuntu@100.76.60.83`)** for full OpusClip-tier AI viral selection + Streamer Split-Screen rendering:
+```bash
+~/video-engine/.venv/bin/python scripts/viral_pipeline.py \
+  --input "<URL_OR_LOCAL_MP4>" -o output/<batch_name> \
+  --layout split --cam-pos auto \
+  --hook-style pill --caption-preset hormozi \
+  --top-n 5 --min-virality 65 \
+  --folder "<Folder Name>" --batch "<Batch Name>" --release-tag "<release-tag>" \
+  --publish mobile-hub
+```
+- **What it runs automatically:** `yt-dlp` (with `.creds/youtube_cookies.txt`) or `--dvr` (`grab_yt_dvr.py`) -> 16kHz RMS energy + `faster-whisper` word timestamps -> Pass 1 Gemini window virality scoring (`2-Second Test` + RMS peaks) -> Pass 2 clip extraction & word-boundary snapping -> Pass 3 Gemini Vision 3-frame hook grounding -> Pillow rounded-pill emoji hook banner (`y=724` below seam) + animated ASS captions (`hormozi`/`pop`/`pill`/`lime`/`oneword`/`clean`) -> `1080x1920` render with `0.000000` A/V sync -> `ffprobe` & PNG QA stills -> `manifest.json` -> Mobile Hub / Postiz publish.
+
 ## 4. Content Rewards & Distribution Rules
 - **Brief Compliance First:** Always verify campaign rules (approved stream timestamps, required brand/hashtag mentions, exact destination/title accuracy, allowed logo overlays, no banned logos, no AI-generated footage).
 - **Organic Only:** NEVER use paid Promote/Boost on Content Rewards clips (triggers rejection and bans).

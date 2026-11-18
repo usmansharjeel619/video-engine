@@ -1,0 +1,10 @@
+NOTICE
+
+This repository incorporates and adapts open-source AI clip selection,
+virality scoring prompts, hook styling/placement concepts, and animated ASS
+caption styling ideas from OpenShorts (https://github.com/mutonby/openshorts),
+licensed under the MIT License.
+
+Bundled typefaces in fonts/ (Montserrat, Archivo Black, Anton, Noto Serif)
+are distributed under their respective SIL Open Font License (OFL) terms
+included alongside the font files.

@@ -28,6 +28,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SFX_DIR = REPO_ROOT / "sfx"
 
 
+def default_cookies_path() -> Path | None:
+    cand = REPO_ROOT / ".creds" / "youtube_cookies.txt"
+    return cand if cand.exists() else None
+
+
+def _ffmpeg_filter_escape(path: Path) -> str:
+    return str(path).replace("\\", "/").replace(":", "\\:")
+
+
 def parse_timestamp(ts: str) -> float:
     """Convert HH:MM:SS, MM:SS, or seconds string to float seconds."""
     ts = ts.strip()
@@ -444,13 +453,20 @@ def render_portrait_clip(
     kept_intervals: list[tuple[float, float]] | None = None,
     use_sfx: bool = False,
     peak_offset: float | None = None,
+    hook_png: Path | None = None,
+    hook_y: int = 724,
+    hook_duration: float = 4.2,
+    fonts_dir: Path | None = None,
 ) -> None:
     """
     Render 1080x1920 portrait clip with ASS captions, optional split-screen facecam+gameplay,
-    silence jump-cuts, punch-zoom, logo overlay, strategic SFX, and -14 LUFS normalization.
+    optional styled Pillow hook PNG banner, silence jump-cuts, punch-zoom, logo overlay,
+    strategic SFX, and -14 LUFS normalization.
     """
     duration = abs_end - abs_start
-    ass_escaped = str(ass_path).replace("\\", "/").replace(":", "\\:")
+    ass_escaped = _ffmpeg_filter_escape(ass_path)
+    resolved_fonts = fonts_dir if fonts_dir is not None else (REPO_ROOT / "fonts")
+    fonts_arg = f":fontsdir='{_ffmpeg_filter_escape(resolved_fonts)}'" if resolved_fonts.exists() else ""
 
     # Step 1: Accurate, low-memory A/V-locked seek + optional cold-open flash-forward + jump-cut concat
     # Give each segment its own coarse-seeked input (-copyts -ss max(0, s_t-4)) so FFmpeg only decodes
@@ -516,16 +532,30 @@ def render_portrait_clip(
             f"{v_in}crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920:flags=lanczos,setsar=1[base]"
         )
 
-    # Step 3: Optional logo + burned-in kinetic ASS captions
+    # Step 3: Optional logo + burned-in kinetic ASS captions + optional styled Pillow hook PNG
     if logo_path is not None:
         inputs.extend(["-i", str(logo_path)])
         logo_idx = next_idx
         next_idx += 1
         filter_parts.append(f"[{logo_idx}:v]scale=240:-1[logo]")
         filter_parts.append("[base][logo]overlay=(W-w)/2:110[with_logo]")
-        filter_parts.append(f"[with_logo]ass='{ass_escaped}'[v]")
+        cap_in = "[with_logo]"
     else:
-        filter_parts.append(f"[base]ass='{ass_escaped}'[v]")
+        cap_in = "[base]"
+
+    if hook_png is not None and hook_png.exists():
+        h_dur = max(0.8, float(hook_duration))
+        fade_st = max(0.4, h_dur - 0.35)
+        filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[with_caps]")
+        inputs.extend(["-loop", "1", "-t", f"{h_dur:.2f}", "-i", str(hook_png)])
+        hook_idx = next_idx
+        next_idx += 1
+        filter_parts.append(f"[{hook_idx}:v]format=rgba,fade=t=out:st={fade_st:.2f}:d=0.35:alpha=1[hook_ov]")
+        filter_parts.append(
+            f"[with_caps][hook_ov]overlay=(W-w)/2:{int(hook_y)}:enable='between(t,0,{h_dur:.2f})':eof_action=pass[v]"
+        )
+    else:
+        filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[v]")
 
     # Step 4: Optional strategic SFX + -14 LUFS audio normalization
     sfx_tracks: list[tuple[Path, float, int]] = []
@@ -602,6 +632,19 @@ def main() -> None:
     parser.add_argument("--top-n", type=int, default=5, help="Number of top clips to export.")
     parser.add_argument("--logo", type=Path, default=None, help="Optional PNG logo overlay path.")
     parser.add_argument("--require-keyword", default=None, help="Only select clips containing this keyword.")
+    parser.add_argument("--cookies", type=Path, default=None, help="Optional Netscape cookies.txt for yt-dlp.")
+    parser.add_argument(
+        "--caption-preset",
+        choices=["hormozi", "pop", "pill", "lime", "oneword", "clean"],
+        default=None,
+        help="Optional kinetic caption preset from caption_styles.py.",
+    )
+    parser.add_argument(
+        "--hook-style",
+        choices=["pill", "yellow", "red", "dark", "classic", "outline", "outline_yellow"],
+        default=None,
+        help="Optional Pillow hook overlay banner style from hook_renderer.py.",
+    )
     args = parser.parse_args()
 
     out_dir: Path = args.output_dir.resolve()
@@ -613,15 +656,17 @@ def main() -> None:
         source_video = work_dir / "source.mp4"
         if not source_video.exists():
             print(f"Downloading source video via yt-dlp -> {source_video}")
-            run_cmd([
-                sys.executable,
-                "-m",
-                "yt_dlp",
+            cookies = args.cookies if args.cookies is not None else default_cookies_path()
+            dl_cmd = [sys.executable, "-m", "yt_dlp"]
+            if cookies and cookies.exists():
+                dl_cmd.extend(["--cookies", str(cookies)])
+            dl_cmd.extend([
                 "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "--merge-output-format", "mp4",
                 "-o", str(source_video),
                 args.input,
             ])
+            run_cmd(dl_cmd)
     else:
         source_video = Path(args.input).resolve()
         if not source_video.exists():
@@ -668,18 +713,55 @@ def main() -> None:
                 kept_intervals, retimed_words = prepend_flash_hook(
                     kept_intervals, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
                 )
-            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True, hook_margin_v=hook_margin)
+            words_for_ass = retimed_words
+            ass_offset = 0.0
+            ass_is_rel = True
         elif args.flash_hook:
             base_iv = [(0.0, round(clip["end"] - clip["start"], 3))]
             kept_intervals, retimed_words = prepend_flash_hook(
                 base_iv, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
             )
-            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True, hook_margin_v=hook_margin)
+            words_for_ass = retimed_words
+            ass_offset = 0.0
+            ass_is_rel = True
         else:
-            build_kinetic_ass(clip["words"], clip["start"], ass_path, hook_title=first_sentence, hook_margin_v=hook_margin)
+            words_for_ass = clip["words"]
+            ass_offset = clip["start"]
+            ass_is_rel = False
+
+        if args.caption_preset:
+            from caption_styles import build_styled_ass
+
+            build_styled_ass(
+                words_for_ass,
+                ass_offset,
+                ass_path,
+                preset=args.caption_preset,
+                layout=args.layout,
+                is_relative=ass_is_rel,
+            )
+        else:
+            build_kinetic_ass(
+                words_for_ass,
+                ass_offset,
+                ass_path,
+                hook_title=None if args.hook_style else first_sentence,
+                is_relative=ass_is_rel,
+                hook_margin_v=hook_margin,
+            )
 
         abs_start = offset + clip["start"]
         abs_end = offset + clip["end"]
+        hook_png = None
+        hook_y = 724
+        if args.hook_style:
+            from hook_renderer import compute_hook_y, create_hook_image
+
+            hook_png, _, hook_h = create_hook_image(
+                first_sentence, work_dir / f"hook_{idx:02d}.png", style=args.hook_style
+            )
+            hook_y = compute_hook_y(args.layout, hook_h, source_video=source_video, sample_time=abs_start + 1.0)
+
         print(f"Rendering clip {idx}/{len(clips)} ({abs_start:.1f}s -> {abs_end:.1f}s, score={clip['score']})...")
         render_portrait_clip(
             source_video,
@@ -693,6 +775,8 @@ def main() -> None:
             kept_intervals=kept_intervals,
             use_sfx=args.sfx,
             peak_offset=clip.get("peakOffset"),
+            hook_png=hook_png,
+            hook_y=hook_y,
         )
         manifest.append(
             {

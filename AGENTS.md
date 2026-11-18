@@ -33,8 +33,8 @@
 | Environment | Location / Host | Purpose |
 |---|---|---|
 | **Laptop Repo (Control/Git)** | `D:\Freelance Projects\video-engine` (GitHub: `usmansharjeel619/video-engine`) | Code editing, manifests, docs, GitHub Pages Mobile Hub (`docs/`), GitHub CLI releases |
-| **Cloud Server Repo** | `/home/ubuntu/video-engine` on `ubuntu@100.76.60.83` | Python `.venv` (`faster-whisper`, `yt-dlp`, `opencv-python-headless`, `numpy`), FFmpeg clipping |
-| **Cloud OpenShorts (OpusClip Alt)** | `/home/ubuntu/openshorts` on `ubuntu@100.76.60.83` | Self-hosted Web UI + AI viral clipper (`mutonby/openshorts`, MIT) |
+| **Cloud Server Repo** | `/home/ubuntu/video-engine` on `ubuntu@100.76.60.83` | Python `.venv` (`faster-whisper`, `yt-dlp`, `opencv-python-headless`, `numpy`, `google-genai`, `pillow`, `pydantic`, `python-dotenv`), FFmpeg clipping & `viral_pipeline.py` |
+| **Cloud OpenShorts Reference (Stopped)** | `/home/ubuntu/openshorts` on `ubuntu@100.76.60.83` | Reference clone of `mutonby/openshorts` (containers stopped to save RAM; AI logic ported into `~/video-engine/scripts/`) |
 | **Cloud Postiz Stack** | `/home/ubuntu/postiz` on `ubuntu@100.76.60.83` | Self-hosted social scheduler (`docker-compose.yaml`) |
 
 ### SSH Access (from Windows PowerShell)
@@ -55,9 +55,7 @@ ssh -i "$env:USERPROFILE\.ssh\tarq_deploy" ubuntu@100.76.60.83
 Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live in [docs/SERVER_INFRASTRUCTURE.md](docs/SERVER_INFRASTRUCTURE.md).
 
 ### Currently Running (Keep Running)
-1. **OpenShorts Self-Hosted (`~/openshorts`)** — OpusClip alternative with Web UI, Gemini moment detection, viral hook text + auto-hook burning, MediaPipe face/split-screen tracking, and animated captions.
-   - Local ports: `127.0.0.1:4010` (`openshorts-frontend` nginx) -> `127.0.0.1:8001` (`openshorts-backend` FastAPI)
-   - Tailscale HTTPS URL: `https://instance-20260916-2320.tail256180.ts.net:4010/#app`
+1. **Native End-to-End Pipeline (`~/video-engine/scripts/viral_pipeline.py`)** — Primary production workflow on `ubuntu@100.76.60.83`. Combines OpenShorts' 2-pass Gemini virality scoring (`gemini-3-flash-preview`), Pass-3 Vision hook grounding (`viral_selector.py`), Pillow emoji hook banners (`hook_renderer.py`), and 6 kinetic ASS caption presets (`caption_styles.py`) with our native Streamer Split-Screen (`clip_engine.py`), cold-open flash-forward hooks, silence jump-cuts, SFX, and QA gate.
 2. **Postiz (`~/postiz`)** — Social scheduling UI + Temporal + Postgres + Redis + Elasticsearch.
    - Local port: `127.0.0.1:4008` (`postiz`), `127.0.0.1:8080` (`temporal-ui`), `127.0.0.1:7233` (`temporal`)
    - Tailscale HTTPS URL: `https://instance-20260916-2320.tail256180.ts.net:4007`
@@ -69,6 +67,7 @@ Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live 
    - `127.0.0.1:8137` (`/tmp/run_backend_devb.py`), `127.0.0.1:8134` (`/tmp/devd-api-8134.py`), `127.0.0.1:8002` (`/home/ubuntu/devf_serve.py`)
 
 ### Intentionally Stopped (Do NOT Start)
+- Standalone **OpenShorts** Docker stack (`~/openshorts`, `openshorts-backend` / `openshorts-frontend` & Tailscale `:4010`) — its AI selection, hook, and caption logic were ported natively into `scripts/viral_pipeline.py`; containers remain stopped to keep server RAM free.
 - `hermes-dashboard.service`, `hermes-gateway-46612b04.service`
 - `tarq-nextdemo-api.service`, `tarq-nextdemo-frontend.service` (Tailscale `:443` routes to `:3201`/`:8003` remain configured while backends stay off)
 - `ollama.service`, `postgresql.service`, `postgresql@16-main.service`
@@ -79,10 +78,15 @@ Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live 
 
 | Path | Role |
 |---|---|
-| `scripts/clip_engine.py` | FFmpeg v2 portrait clipper (`split` facecam+gameplay, `auto` OpenCV cam box, `--trim-silence`, `--flash-hook`, `--sfx`, `setsar=1`, `-14 LUFS`) |
-| `scripts/grab_yt_dvr.py` | Downloads bounded `[start-min, end-min]` DASH `299+140` slices from YouTube live/VOD (`0.000000` A/V start_time) |
-| `scripts/build_mobile_pack.py` | Generates `docs/index.html` Mobile Hub (Folders -> Batches -> `To Post` / `Posted` / `All` tabs + `localStorage` tracking) |
+| `scripts/viral_pipeline.py` | **Primary 1-command end-to-end orchestrator** (ingest -> Whisper -> 2-pass Gemini virality + Vision hooks -> Pillow banner + ASS captions + split-screen render -> `ffprobe`/still QA -> Mobile Hub / Postiz publish) |
+| `scripts/viral_selector.py` | 2-pass Gemini virality scoring (`SCORE_PROMPT_TEMPLATE` + `DETAIL_PROMPT_TEMPLATE`), RMS audio signal enrichment, word-boundary snapping, overlap dedupe, Pass-3 Vision hook grounding (`GROUNDED_HOOK_PROMPT`) |
+| `scripts/hook_renderer.py` | Styled RGBA Pillow hook banners (`pill`, `yellow`, `red`, `dark`, `classic`, `outline`, `outline_yellow`) with bitmap color emoji handling + collision-free Y placement |
+| `scripts/caption_styles.py` | 6 kinetic ASS animated caption presets (`hormozi`, `pop`, `pill`, `lime`, `oneword`, `clean`) with active-word pop & highlight boxes |
+| `scripts/clip_engine.py` | FFmpeg v2 portrait renderer (`split` facecam+gameplay, `auto` OpenCV cam box, `--trim-silence`, `--flash-hook`, `--sfx`, hook PNG overlay, `fontsdir`, `setsar=1`, `-14 LUFS`) |
+| `scripts/grab_yt_dvr.py` | Downloads bounded `[start-min, end-min]` DASH `299+140` slices from YouTube live/VOD with auto cookies (`0.000000` A/V start_time) |
+| `scripts/build_mobile_pack.py` | Generates `docs/index.html` Mobile Hub (Folders -> Batches -> `To Post` / `Posted` / `All` tabs + virality badge + `localStorage` tracking) |
+| `scripts/publish_clips.py` | Publishes QA-passed manifest batches to Postiz (`POSTIZ_INTEGRATION_IDS` or auto-discovered `/integrations`) or Upload-Post |
+| `fonts/`, `sfx/` | Bundled SIL OFL fonts (`Montserrat ExtraBold`, `Anton`, `Archivo Black`, `Noto Serif`) and WAV SFX (`whoosh.wav`, `boom.wav`, `ding.wav`) |
 | `manifests/hub_config.json` | Folder/batch registry powering the Mobile Hub |
 | `manifests/expedia_batch2.json`, `manifests/gta6_batch1.json` | Batch clip manifests backed by GitHub Releases (`batch-2`, `gta6-batch1`) |
-| `sfx/` | Tracked WAV SFX (`whoosh.wav`, `boom.wav`, `ding.wav`) |
 | `.agents/skills/viral-stream-clipper/SKILL.md` | Complete viral clipping, pacing, hook, and Content Rewards QA playbook |
