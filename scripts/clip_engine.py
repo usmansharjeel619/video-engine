@@ -319,6 +319,10 @@ def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> 
     }
     if cam_pos in presets:
         return presets[cam_pos]
+    if "," in cam_pos:
+        parts = [float(p.strip()) for p in cam_pos.split(",")]
+        if len(parts) == 4:
+            return (parts[0], parts[1], parts[2], parts[3])
 
     try:
         import cv2
@@ -369,9 +373,10 @@ def build_kinetic_ass(
     hook_title: str | None = None,
     chunk_size: int = 3,
     is_relative: bool = False,
+    hook_margin_v: int = 220,
 ) -> None:
     """Generate ASS subtitle file with 2-3 word chunks and active-word highlight in safe zone."""
-    header = """[Script Info]
+    header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
 PlayResY: 1920
@@ -381,7 +386,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,Arial Black,68,&H00FFFFFF,&H0000D7FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,6,3,2,60,60,460,1
-Style: Hook,Arial Black,54,&H00000000,&H00000000,&H00FFFFFF,&H0000D7FF,-1,0,0,0,100,100,0,0,3,18,0,8,80,80,220,1
+Style: Hook,Arial Black,48,&H00000000,&H00000000,&H00FFFFFF,&H0000D7FF,-1,0,0,0,100,100,0,0,3,16,0,8,70,70,{hook_margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -390,7 +395,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     offset = 0.0 if is_relative else clip_start
 
     if hook_title:
-        clean_hook = hook_title.replace("{", "").replace("}", "").upper()
+        clean_hook = hook_title.encode("ascii", "ignore").decode("ascii").replace("{", "").replace("}", "").strip().upper()
         lines.append(
             f"Dialogue: 1,{format_ass_time(0.0)},{format_ass_time(3.2)},Hook,,0,0,0,,{clean_hook}"
         )
@@ -447,21 +452,29 @@ def render_portrait_clip(
     duration = abs_end - abs_start
     ass_escaped = str(ass_path).replace("\\", "/").replace(":", "\\:")
 
-    inputs = ["-ss", f"{abs_start:.3f}", "-t", f"{duration:.3f}", "-i", str(source_video)]
+    inputs = ["-i", str(source_video)]
     next_idx = 1
 
-    # Step 1: Optional cold-open flash-forward + jump-cut concat on [0:v]/[0:a]
+    # Step 1: Accurate A/V-locked seek + optional cold-open flash-forward + jump-cut concat
+    # Using trim/atrim in filter_complex (after -i) guarantees 0ms A/V drift even on MPEG-TS/DVR streams.
     filter_parts: list[str] = []
-    if kept_intervals and len(kept_intervals) >= 1 and (len(kept_intervals) > 1 or kept_intervals[0][0] > 0.01):
+    if kept_intervals and len(kept_intervals) >= 1:
         seg_labels = []
         for k, (ks, ke) in enumerate(kept_intervals):
-            filter_parts.append(f"[0:v]trim=start={ks:.3f}:end={ke:.3f},setpts=PTS-STARTPTS[vseg{k}]")
-            filter_parts.append(f"[0:a]atrim=start={ks:.3f}:end={ke:.3f},asetpts=PTS-STARTPTS[aseg{k}]")
+            s_t = abs_start + ks
+            e_t = abs_start + ke
+            filter_parts.append(f"[0:v]trim=start={s_t:.3f}:end={e_t:.3f},setpts=PTS-STARTPTS[vseg{k}]")
+            filter_parts.append(f"[0:a]atrim=start={s_t:.3f}:end={e_t:.3f},asetpts=PTS-STARTPTS[aseg{k}]")
             seg_labels.append(f"[vseg{k}][aseg{k}]")
-        filter_parts.append(f"{''.join(seg_labels)}concat=n={len(kept_intervals)}:v=1:a=1[vsrc][asrc]")
+        if len(kept_intervals) > 1:
+            filter_parts.append(f"{''.join(seg_labels)}concat=n={len(kept_intervals)}:v=1:a=1[vsrc][asrc]")
+        else:
+            filter_parts.append("[vseg0]null[vsrc];[aseg0]anull[asrc]")
         v_in, a_in = "[vsrc]", "[asrc]"
     else:
-        v_in, a_in = "[0:v]", "[0:a]"
+        filter_parts.append(f"[0:v]trim=start={abs_start:.3f}:end={abs_end:.3f},setpts=PTS-STARTPTS[vsrc]")
+        filter_parts.append(f"[0:a]atrim=start={abs_start:.3f}:end={abs_end:.3f},asetpts=PTS-STARTPTS[asrc]")
+        v_in, a_in = "[vsrc]", "[asrc]"
 
     # Step 2: Portrait framing
     if layout == "blur":
@@ -572,7 +585,7 @@ def main() -> None:
     parser.add_argument("--start", default=None, help="Optional start timestamp in source video (e.g. 02:56:29).")
     parser.add_argument("--end", default=None, help="Optional end timestamp in source video.")
     parser.add_argument("--layout", choices=["center", "blur", "split"], default="split", help="Portrait framing mode.")
-    parser.add_argument("--cam-pos", default="auto", help="Facecam position for split mode: auto, tl, tr, bl, br, center.")
+    parser.add_argument("--cam-pos", default="auto", help="Facecam position for split mode: auto, tl, tr, bl, br, center, or x,y,w,h (0..1).")
     parser.add_argument("--trim-silence", action="store_true", help="Jump-cut pauses > 0.55s while keeping captions synced.")
     parser.add_argument("--flash-hook", action="store_true", help="Prepend a 1.7s peak-reaction cold-open hook at 0.0s.")
     parser.add_argument("--sfx", action="store_true", help="Add subtle hook whoosh + peak reaction impact SFX.")
@@ -639,6 +652,7 @@ def main() -> None:
         mp4_path = out_dir / f"clip_{idx:02d}.mp4"
         first_sentence = clip["text"].split(".")[0][:48].strip()
 
+        hook_margin = 650 if args.layout == "split" else 220
         kept_intervals: list[tuple[float, float]] | None = None
         if args.trim_silence:
             kept_intervals, retimed_words = compute_jump_cut_segments(
@@ -648,15 +662,15 @@ def main() -> None:
                 kept_intervals, retimed_words = prepend_flash_hook(
                     kept_intervals, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
                 )
-            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True)
+            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True, hook_margin_v=hook_margin)
         elif args.flash_hook:
             base_iv = [(0.0, round(clip["end"] - clip["start"], 3))]
             kept_intervals, retimed_words = prepend_flash_hook(
                 base_iv, clip["words"], clip["start"], clip["end"], clip["peakOffset"]
             )
-            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True)
+            build_kinetic_ass(retimed_words, 0.0, ass_path, hook_title=first_sentence, is_relative=True, hook_margin_v=hook_margin)
         else:
-            build_kinetic_ass(clip["words"], clip["start"], ass_path, hook_title=first_sentence)
+            build_kinetic_ass(clip["words"], clip["start"], ass_path, hook_title=first_sentence, hook_margin_v=hook_margin)
 
         abs_start = offset + clip["start"]
         abs_end = offset + clip["end"]
