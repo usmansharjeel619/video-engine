@@ -29,7 +29,21 @@ GEMINI_FALLBACK_MODELS = (
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
 )
+DEFAULT_SELECTOR_BACKEND = "codex"
 DEFAULT_CODEX_MODEL = "gpt-6.2-sol"
+DEFAULT_CODEX_REASONING = "medium"
+
+
+def _selector_backend() -> str:
+    return (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
+
+
+def _selector_label(gemini_model: str) -> str:
+    if _selector_backend() == "codex":
+        codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
+        codex_reasoning = (os.environ.get("CODEX_SELECTOR_REASONING") or DEFAULT_CODEX_REASONING).strip()
+        return f"codex:{codex_model} ({codex_reasoning})"
+    return gemini_model
 
 
 def load_dotenv_if_available(env_path: Path | None = None) -> None:
@@ -565,14 +579,15 @@ def _call_codex_structured(
     schema_cls: type[BaseModel],
     stage: str,
     image_paths: list[Path] | None = None,
-    timeout_secs: int = 120,
+    timeout_secs: int = 240,
 ) -> dict[str, Any]:
-    """Run headless Codex CLI (`codex exec`) as structured JSON selector fallback."""
+    """Run headless Codex CLI (`codex exec -m gpt-6.2-sol` medium) for structured JSON selection."""
     codex_bin = shutil.which("codex") or "/home/ubuntu/opt/node22/bin/codex"
     if not Path(codex_bin).exists() and not shutil.which(codex_bin):
-        raise RuntimeError("codex CLI not found for selector fallback.")
+        raise RuntimeError("codex CLI not found.")
 
     codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
+    codex_reasoning = (os.environ.get("CODEX_SELECTOR_REASONING") or DEFAULT_CODEX_REASONING).strip()
     schema = _strict_json_schema(schema_cls)
     with tempfile.TemporaryDirectory(prefix="codex_sel_") as tmpdir:
         tmp_path = Path(tmpdir)
@@ -586,7 +601,7 @@ def _call_codex_structured(
             "-m",
             codex_model,
             "-c",
-            'model_reasoning_effort="low"',
+            f'model_reasoning_effort="{codex_reasoning}"',
             "-s",
             "read-only",
             "--skip-git-repo-check",
@@ -598,12 +613,13 @@ def _call_codex_structured(
         for img in image_paths or []:
             if img.exists():
                 cmd.extend(["-i", str(img)])
-        cmd.append(prompt)
+        cmd.append("-")
 
-        print(f"  [Codex:{stage}] invoking {codex_model} (timeout={timeout_secs}s)...")
+        print(f"  [Codex:{stage}] invoking {codex_model} ({codex_reasoning}, timeout={timeout_secs}s)...")
         proc = subprocess.run(
             cmd,
             cwd=str(REPO_ROOT),
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=timeout_secs,
@@ -626,8 +642,8 @@ def _generate_structured_with_fallback(
     stage: str,
     image_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
-    """Try Gemini model pool first (rotating on 429/503/timeout), then fall back to Codex CLI."""
-    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or "auto").strip().lower()
+    """Dispatch structured selection to Codex CLI (default) or Gemini when explicitly configured."""
+    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
     if backend == "codex":
         return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
 
@@ -707,7 +723,7 @@ def score_windows_gemini(
             windows_json=json.dumps(payload, ensure_ascii=False),
             instructions_block=instr_block,
         )
-        print(f"Pass 1: Scoring batch {b_idx}/{len(batches)} ({len(batch)} windows) via {model_name}...")
+        print(f"Pass 1: Scoring batch {b_idx}/{len(batches)} ({len(batch)} windows) via {_selector_label(model_name)}...")
         data = _generate_structured_with_fallback(
             client=client,
             primary_model=model_name,
@@ -799,7 +815,7 @@ def select_clips_gemini(
         keyword_block=kw_block,
         extra_tags_hint=tags_hint,
     )
-    print(f"Pass 2: Extracting clips & hooks from {len(shortlisted_windows)} shortlisted windows via {model_name}...")
+    print(f"Pass 2: Extracting clips & hooks from {len(shortlisted_windows)} shortlisted windows via {_selector_label(model_name)}...")
     data = _generate_structured_with_fallback(
         client=client,
         primary_model=model_name,
@@ -879,8 +895,11 @@ def ground_hook_with_vision(
     current_title: str,
     language: str = "en",
 ) -> dict[str, str] | None:
-    """Pass 3: Inspect 3 frames from the clip via Gemini Vision and ground hook + title to screen action."""
-    from google.genai import types as genai_types
+    """Pass 3: Inspect 3 frames from the clip via Vision (Codex or Gemini) and ground hook + title to screen action."""
+    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
+    genai_types = None
+    if backend != "codex" and client is not None:
+        from google.genai import types as genai_types
 
     dur = max(1.0, float(abs_end) - float(abs_start))
     timestamps = [abs_start + dur * frac for frac in (0.15, 0.50, 0.85)]
@@ -912,14 +931,15 @@ def ground_hook_with_vision(
                 )
                 if proc.returncode == 0 and jpg.exists() and jpg.stat().st_size > 0:
                     jpg_paths.append(jpg)
-                    parts.append(
-                        genai_types.Part.from_bytes(
-                            data=jpg.read_bytes(),
-                            mime_type="image/jpeg",
+                    if genai_types is not None:
+                        parts.append(
+                            genai_types.Part.from_bytes(
+                                data=jpg.read_bytes(),
+                                mime_type="image/jpeg",
+                            )
                         )
-                    )
 
-            if not parts:
+            if not jpg_paths:
                 return None
 
             prompt = GROUNDED_HOOK_PROMPT.format(
@@ -972,10 +992,10 @@ def analyze_and_select_viral_clips(
     api_key: str | None = None,
     min_hook_score: int = 0,
 ) -> list[dict[str, Any]]:
-    """Run full Pass 1 -> Pass 2 -> Pass 3 viral moment selection (Gemini pool + Codex fallback)."""
+    """Run full Pass 1 -> Pass 2 -> Pass 3 viral moment selection (Codex GPT-6.2-Sol Medium by default)."""
     resolved_model = get_gemini_model(model_name)
     client: Any = None
-    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or "auto").strip().lower()
+    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
     if backend != "codex":
         try:
             from google import genai
@@ -1031,7 +1051,7 @@ def analyze_and_select_viral_clips(
     )
 
     if ground_hooks and selected and source_video.exists():
-        print(f"Pass 3: Vision-grounding hooks on {len(selected)} selected clips via {resolved_model}...")
+        print(f"Pass 3: Vision-grounding hooks on {len(selected)} selected clips via {_selector_label(resolved_model)}...")
         for idx, clip in enumerate(selected, start=1):
             abs_s = offset_seconds + clip["start"]
             abs_e = offset_seconds + clip["end"]
