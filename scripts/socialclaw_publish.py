@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -235,18 +237,27 @@ def _upload_asset(
     cached = state.get("uploaded_assets", {}).get(cache_key)
     if cached:
         return cached
-    with file_path.open("rb") as fh:
-        resp = session.post(
-            f"{base_url}/v1/assets/upload",
-            headers=_headers(api_key),
-            files={"file": (file_path.name, fh, "video/mp4")},
-            timeout=180,
+    sc_bin = shutil.which("socialclaw") or "/home/ubuntu/opt/node22/bin/socialclaw"
+    env = os.environ.copy()
+    env.setdefault("SOCIALCLAW_API_KEY", api_key)
+    env.setdefault("SC_API_KEY", api_key)
+    proc = subprocess.run(
+        [sc_bin, "assets", "upload", "--file", str(file_path), "--json"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"socialclaw assets upload failed ({proc.returncode}): {(proc.stderr or proc.stdout)[-300:]}"
         )
-    resp.raise_for_status()
-    asset = resp.json().get("asset") or {}
+    data = json.loads(proc.stdout)
+    asset = data.get("asset") or {}
     media_url = asset.get("useAsMediaLink") or asset.get("publicUrl") or ""
     if not media_url:
-        raise RuntimeError(f"SocialClaw asset upload missing URL: {resp.text[:300]}")
+        raise RuntimeError(f"SocialClaw asset upload missing URL: {proc.stdout[:300]}")
     state.setdefault("uploaded_assets", {})[cache_key] = media_url
     _save_state(state)
     return media_url
