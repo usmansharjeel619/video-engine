@@ -25,8 +25,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 STATE_FILE = REPO_ROOT / "output" / "socialclaw_state.json"
 DEFAULT_BASE_URL = "https://getsocialclaw.com"
 DEFAULT_DAILY_CAP = 45
+PROVIDER_DAILY_CAPS = {
+    "youtube": 9,   # YouTube enforces a hard ~10/24h uploadLimitExceeded cap on standard channels
+    "tiktok": 45,
+    "instagram": 45,
+}
 DEFAULT_SPACING_MINUTES = 30
 DEFAULT_PROVIDERS = ("tiktok", "instagram", "youtube")
+
+
+def provider_daily_cap(provider: str, fallback_cap: int = DEFAULT_DAILY_CAP) -> int:
+    cap = PROVIDER_DAILY_CAPS.get(provider, fallback_cap)
+    return min(fallback_cap, cap) if fallback_cap > 0 else cap
 
 
 def _load_env_if_needed() -> None:
@@ -90,24 +100,35 @@ def compute_next_slot(
 ) -> datetime:
     """
     Pick the earliest UTC publish timestamp >= now + 3m spaced >= spacing_minutes
-    from the latest scheduled post on that account while keeping each UTC date
-    under daily_cap posts.
+    from the latest scheduled post on that account while keeping BOTH the UTC date
+    AND any rolling 24-hour window under daily_cap posts.
     """
     floor = (now_utc.astimezone(timezone.utc) + timedelta(minutes=3)).replace(second=0, microsecond=0)
-    future_or_recent = sorted(t.astimezone(timezone.utc) for t in existing_times if t >= now_utc - timedelta(hours=24))
+    normalized = sorted(t.astimezone(timezone.utc) for t in existing_times)
+    future_or_recent = [t for t in normalized if t >= now_utc - timedelta(hours=24)]
     candidate = floor
     if future_or_recent:
         last = future_or_recent[-1]
         candidate = max(floor, (last + timedelta(minutes=spacing_minutes)).replace(second=0, microsecond=0))
 
+    cap = max(1, int(daily_cap))
     counts_by_day: dict[str, int] = {}
-    for t in existing_times:
-        day_key = t.astimezone(timezone.utc).strftime("%Y-%m-%d")
+    for t in normalized:
+        day_key = t.strftime("%Y-%m-%d")
         counts_by_day[day_key] = counts_by_day.get(day_key, 0) + 1
 
-    while counts_by_day.get(candidate.strftime("%Y-%m-%d"), 0) >= max(1, int(daily_cap)):
-        next_day = (candidate + timedelta(days=1)).replace(hour=0, minute=5, second=0, microsecond=0)
-        candidate = next_day
+    while True:
+        day_count = counts_by_day.get(candidate.strftime("%Y-%m-%d"), 0)
+        window_start = candidate - timedelta(hours=24)
+        in_window = [t for t in normalized if window_start <= t <= candidate]
+        if day_count >= cap:
+            candidate = (candidate + timedelta(days=1)).replace(hour=0, minute=5, second=0, microsecond=0)
+            continue
+        if len(in_window) >= cap:
+            oldest = in_window[len(in_window) - cap]
+            candidate = max(candidate + timedelta(minutes=spacing_minutes), (oldest + timedelta(hours=24, minutes=5)).replace(second=0, microsecond=0))
+            continue
+        break
 
     return candidate
 
@@ -335,7 +356,7 @@ def publish_manifest_to_socialclaw(
                 prov_times,
                 now_utc=now_utc,
                 spacing_minutes=spacing_minutes,
-                daily_cap=daily_cap,
+                daily_cap=provider_daily_cap(prov, daily_cap),
             )
             slot_iso = slot_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
             post_obj = build_platform_post(prov, acct_handle, item, media_url, slot_iso)

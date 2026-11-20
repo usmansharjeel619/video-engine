@@ -152,7 +152,7 @@ class ViralPipelineUnitTests(unittest.TestCase):
 
     def test_socialclaw_slot_spacing_and_payloads(self) -> None:
         from datetime import datetime, timezone
-        from socialclaw_publish import build_platform_post, compute_next_slot
+        from socialclaw_publish import build_platform_post, compute_next_slot, provider_daily_cap
 
         now = datetime(2026, 11, 20, 14, 0, tzinfo=timezone.utc)
         existing = [
@@ -162,9 +162,11 @@ class ViralPipelineUnitTests(unittest.TestCase):
         slot = compute_next_slot(existing, now_utc=now, spacing_minutes=30, daily_cap=45)
         self.assertEqual(slot, datetime(2026, 11, 20, 15, 15, tzinfo=timezone.utc))
 
-        # Daily cap rollover to next UTC day
+        # Daily cap + rolling 24h window rollover
         capped_slot = compute_next_slot(existing, now_utc=now, spacing_minutes=30, daily_cap=2)
-        self.assertEqual(capped_slot.strftime("%Y-%m-%d"), "2026-11-21")
+        self.assertGreaterEqual(capped_slot, datetime(2026, 11, 21, 14, 20, tzinfo=timezone.utc))
+        self.assertEqual(provider_daily_cap("youtube"), 9)
+        self.assertEqual(provider_daily_cap("tiktok"), 45)
 
         item = {
             "title": "Lacy Loses It in GTA 6!",
