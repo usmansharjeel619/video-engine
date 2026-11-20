@@ -346,24 +346,36 @@ def publish_manifest_to_socialclaw(
                 prov_times.append(slot_dt)
                 continue
 
-            val_resp = session.post(
-                f"{sc_base}/v1/posts/validate",
-                headers={**_headers(api_key), "Content-Type": "application/json"},
-                json=payload,
-                timeout=30,
-            )
+            try:
+                val_resp = session.post(
+                    f"{sc_base}/v1/posts/validate",
+                    headers={**_headers(api_key), "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=90,
+                )
+            except requests.RequestException as exc:
+                err = f"validate request error ({prov}/{clip_name}): {exc}"
+                print(f"[SocialClaw] WARN {err}")
+                results["providers"].setdefault(prov, []).append({"clip": clip_name, "error": err})
+                continue
             if not val_resp.ok or not val_resp.json().get("ok"):
                 err = f"validate failed ({prov}/{clip_name}): {val_resp.text[:300]}"
                 print(f"[SocialClaw] WARN {err}")
                 results["providers"].setdefault(prov, []).append({"clip": clip_name, "error": err})
                 continue
 
-            app_resp = session.post(
-                f"{sc_base}/v1/posts/apply",
-                headers={**_headers(api_key), "Content-Type": "application/json"},
-                json=payload,
-                timeout=30,
-            )
+            try:
+                app_resp = session.post(
+                    f"{sc_base}/v1/posts/apply",
+                    headers={**_headers(api_key), "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=90,
+                )
+            except requests.RequestException as exc:
+                err = f"apply request error ({prov}/{clip_name}): {exc}"
+                print(f"[SocialClaw] WARN {err}")
+                results["providers"].setdefault(prov, []).append({"clip": clip_name, "error": err})
+                continue
             if not app_resp.ok or not app_resp.json().get("ok"):
                 err = f"apply failed ({prov}/{clip_name}): {app_resp.text[:300]}"
                 print(f"[SocialClaw] WARN {err}")
