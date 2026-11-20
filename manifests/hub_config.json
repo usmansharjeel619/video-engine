@@ -5,6 +5,16 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Lacy GTA 6 #77 (10:30:00–10:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-077",
+        "manifest": "manifests/lacy-gta6-auto-077.json"
+      },
+      {
+        "batch": "Lacy GTA 6 #76 (10:15:00–10:30:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-076",
+        "manifest": "manifests/lacy-gta6-auto-076.json"
+      },
+      {
         "batch": "Lacy GTA 6 #40 (06:15:00–06:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-040",
         "manifest": "manifests/lacy-gta6-auto-040.json"
