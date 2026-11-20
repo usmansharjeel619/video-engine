@@ -1,5 +1,16 @@
 [
   {
+    "folder": "Lacy — GTA 6",
+    "subtitle": "Split-Screen Facecam + GTA 6 · Strict 2s Hooks · #LACY #GTA6",
+    "batches": [
+      {
+        "batch": "Batch 1 (4 Clips — Auto-Clipper · 88-95 Virality)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-batch1",
+        "manifest": "manifests/lacy_gta6_batch1.json"
+      }
+    ]
+  },
+  {
     "folder": "IShowSpeed — GTA 6",
     "subtitle": "Split-Screen Facecam + Gameplay · Outclass Hooks",
     "batches": [
