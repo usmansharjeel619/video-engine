@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -20,7 +21,15 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview"
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_FALLBACK_MODELS = (
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+)
+DEFAULT_CODEX_MODEL = "gpt-6.2-sol"
 
 
 def load_dotenv_if_available(env_path: Path | None = None) -> None:
@@ -519,6 +528,142 @@ def _log_token_usage(stage: str, response: Any) -> None:
     print(f"  [Gemini:{stage}] tokens in={in_tok} out={out_tok}")
 
 
+def build_gemini_model_candidates(primary_model: str | None = None) -> list[str]:
+    """Return ordered, deduplicated Gemini models starting from primary_model."""
+    ordered: list[str] = []
+    if primary_model and primary_model.strip():
+        ordered.append(primary_model.strip())
+    for m in GEMINI_FALLBACK_MODELS:
+        if m not in ordered:
+            ordered.append(m)
+    return ordered
+
+
+def _strict_json_schema(schema_cls: type[BaseModel]) -> dict[str, Any]:
+    """Return an OpenAI-compatible strict JSON schema (additionalProperties=false everywhere)."""
+    schema = schema_cls.model_json_schema()
+
+    def _enforce(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "object":
+                node["additionalProperties"] = False
+                props = node.get("properties")
+                if isinstance(props, dict):
+                    node["required"] = list(props.keys())
+            for val in node.values():
+                _enforce(val)
+        elif isinstance(node, list):
+            for item in node:
+                _enforce(item)
+
+    _enforce(schema)
+    return schema
+
+
+def _call_codex_structured(
+    prompt: str,
+    schema_cls: type[BaseModel],
+    stage: str,
+    image_paths: list[Path] | None = None,
+    timeout_secs: int = 120,
+) -> dict[str, Any]:
+    """Run headless Codex CLI (`codex exec`) as structured JSON selector fallback."""
+    codex_bin = shutil.which("codex") or "/home/ubuntu/opt/node22/bin/codex"
+    if not Path(codex_bin).exists() and not shutil.which(codex_bin):
+        raise RuntimeError("codex CLI not found for selector fallback.")
+
+    codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
+    schema = _strict_json_schema(schema_cls)
+    with tempfile.TemporaryDirectory(prefix="codex_sel_") as tmpdir:
+        tmp_path = Path(tmpdir)
+        schema_file = tmp_path / "schema.json"
+        out_file = tmp_path / "out.json"
+        schema_file.write_text(json.dumps(schema), encoding="utf-8")
+
+        cmd = [
+            codex_bin,
+            "exec",
+            "-m",
+            codex_model,
+            "-c",
+            'model_reasoning_effort="low"',
+            "-s",
+            "read-only",
+            "--skip-git-repo-check",
+            "--output-schema",
+            str(schema_file),
+            "-o",
+            str(out_file),
+        ]
+        for img in image_paths or []:
+            if img.exists():
+                cmd.extend(["-i", str(img)])
+        cmd.append(prompt)
+
+        print(f"  [Codex:{stage}] invoking {codex_model} (timeout={timeout_secs}s)...")
+        proc = subprocess.run(
+            cmd,
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout_secs,
+            check=False,
+        )
+        if proc.returncode != 0 or not out_file.exists():
+            err = (proc.stderr or proc.stdout or "")[-300:].strip()
+            raise RuntimeError(f"codex exec failed ({proc.returncode}): {err}")
+        raw = out_file.read_text(encoding="utf-8").strip()
+        return _parse_json_response_text(raw)
+
+
+def _generate_structured_with_fallback(
+    client: Any,
+    primary_model: str,
+    contents: Any,
+    codex_prompt: str,
+    schema_cls: type[BaseModel],
+    temperature: float,
+    stage: str,
+    image_paths: list[Path] | None = None,
+) -> dict[str, Any]:
+    """Try Gemini model pool first (rotating on 429/503/timeout), then fall back to Codex CLI."""
+    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or "auto").strip().lower()
+    if backend == "codex":
+        return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
+
+    from google.genai import types as genai_types
+
+    last_err: Exception | None = None
+    if client is not None:
+        for candidate_model in build_gemini_model_candidates(primary_model):
+            try:
+                resp = client.models.generate_content(
+                    model=candidate_model,
+                    contents=contents,
+                    config=genai_types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=schema_cls,
+                        temperature=temperature,
+                    ),
+                )
+                _log_token_usage(f"{stage}:{candidate_model}", resp)
+                return _response_to_dict(resp)
+            except Exception as exc:
+                last_err = exc
+                print(f"  [Gemini:{stage}] {candidate_model} failed ({str(exc)[:140]}); trying next...")
+
+    if backend != "gemini":
+        try:
+            return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
+        except Exception as codex_exc:
+            if last_err is not None:
+                raise RuntimeError(f"Gemini & Codex both failed: gemini={last_err} | codex={codex_exc}") from codex_exc
+            raise
+
+    assert last_err is not None
+    raise last_err
+
+
 # --- Gemini Pipeline Passes ---
 
 
@@ -529,11 +674,9 @@ def score_windows_gemini(
     video_duration: float,
     language: str = "en",
     instructions: str | None = None,
-    batch_size: int = 8,
+    batch_size: int = 16,
 ) -> list[dict[str, Any]]:
     """Pass 1: Score every overlapping candidate window on the 2-Second Test and shortlist top N."""
-    from google.genai import types as genai_types
-
     if not windows:
         return []
 
@@ -565,17 +708,15 @@ def score_windows_gemini(
             instructions_block=instr_block,
         )
         print(f"Pass 1: Scoring batch {b_idx}/{len(batches)} ({len(batch)} windows) via {model_name}...")
-        resp = client.models.generate_content(
-            model=model_name,
+        data = _generate_structured_with_fallback(
+            client=client,
+            primary_model=model_name,
             contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=ScoreResponse,
-                temperature=0.3,
-            ),
+            codex_prompt=prompt,
+            schema_cls=ScoreResponse,
+            temperature=0.3,
+            stage=f"score-{b_idx}",
         )
-        _log_token_usage(f"score-{b_idx}", resp)
-        data = _response_to_dict(resp)
         for item in data.get("windows", []):
             wid = item.get("id")
             if wid in win_lookup:
@@ -614,8 +755,6 @@ def select_clips_gemini(
     min_hook_score: int = 0,
 ) -> list[dict[str, Any]]:
     """Pass 2: Extract exact viral clips, hooks, platform copy & snap edges to words."""
-    from google.genai import types as genai_types
-
     if not shortlisted_windows:
         return []
 
@@ -661,17 +800,15 @@ def select_clips_gemini(
         extra_tags_hint=tags_hint,
     )
     print(f"Pass 2: Extracting clips & hooks from {len(shortlisted_windows)} shortlisted windows via {model_name}...")
-    resp = client.models.generate_content(
-        model=model_name,
+    data = _generate_structured_with_fallback(
+        client=client,
+        primary_model=model_name,
         contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=DetailResponse,
-            temperature=0.4,
-        ),
+        codex_prompt=prompt,
+        schema_cls=DetailResponse,
+        temperature=0.4,
+        stage="detail",
     )
-    _log_token_usage("detail", resp)
-    data = _response_to_dict(resp)
     raw_shorts = list(data.get("shorts") or [])
 
     processed: list[dict[str, Any]] = []
@@ -751,6 +888,7 @@ def ground_hook_with_vision(
     try:
         with tempfile.TemporaryDirectory(prefix="vframe_") as tmpdir:
             parts: list[Any] = []
+            jpg_paths: list[Path] = []
             for idx, ts in enumerate(timestamps, start=1):
                 jpg = Path(tmpdir) / f"f{idx}.jpg"
                 proc = subprocess.run(
@@ -773,6 +911,7 @@ def ground_hook_with_vision(
                     check=False,
                 )
                 if proc.returncode == 0 and jpg.exists() and jpg.stat().st_size > 0:
+                    jpg_paths.append(jpg)
                     parts.append(
                         genai_types.Part.from_bytes(
                             data=jpg.read_bytes(),
@@ -790,17 +929,16 @@ def ground_hook_with_vision(
                 transcript=transcript_text[:2500],
             )
             parts.append(prompt)
-            resp = client.models.generate_content(
-                model=model_name,
+            data = _generate_structured_with_fallback(
+                client=client,
+                primary_model=model_name,
                 contents=parts,
-                config=genai_types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=GroundedHook,
-                    temperature=0.35,
-                ),
+                codex_prompt=prompt,
+                schema_cls=GroundedHook,
+                temperature=0.35,
+                stage="vision-hook",
+                image_paths=jpg_paths,
             )
-            _log_token_usage("vision-hook", resp)
-            data = _response_to_dict(resp)
             hook = str(data.get("viral_hook_text") or "").strip()
             title = str(data.get("video_title_for_youtube_short") or "").strip()
             on_screen = str(data.get("on_screen") or "").strip()
@@ -834,16 +972,24 @@ def analyze_and_select_viral_clips(
     api_key: str | None = None,
     min_hook_score: int = 0,
 ) -> list[dict[str, Any]]:
-    """Run full Pass 1 -> Pass 2 -> Pass 3 Gemini viral moment selection."""
-    from google import genai
-    from google.genai import types as genai_types
-
-    resolved_key = get_gemini_api_key(api_key)
+    """Run full Pass 1 -> Pass 2 -> Pass 3 viral moment selection (Gemini pool + Codex fallback)."""
     resolved_model = get_gemini_model(model_name)
-    client = genai.Client(
-        api_key=resolved_key,
-        http_options=genai_types.HttpOptions(api_version="v1beta"),
-    )
+    client: Any = None
+    backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or "auto").strip().lower()
+    if backend != "codex":
+        try:
+            from google import genai
+            from google.genai import types as genai_types
+
+            resolved_key = get_gemini_api_key(api_key)
+            client = genai.Client(
+                api_key=resolved_key,
+                http_options=genai_types.HttpOptions(api_version="v1beta", timeout=60_000),
+            )
+        except Exception as exc:
+            if backend == "gemini":
+                raise
+            print(f"Note: Gemini client unavailable ({exc}); using Codex CLI fallback.")
 
     all_words = [
         w for seg in transcript_result.get("segments", []) for w in (seg.get("words") or [])

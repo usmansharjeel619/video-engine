@@ -17,6 +17,12 @@ if ! flock -n 9; then
 fi
 
 cd "$REPO"
+if [ -f "$REPO/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO/.env"
+  set +a
+fi
 
 # Find batches ready for Codex QA (skip invoking Codex completely = 0 credits if none!)
 READY=$(find output/auto_batches -maxdepth 2 -name ".ready_for_qa" 2>/dev/null || true)
@@ -37,6 +43,6 @@ codex exec \
   -c 'model_reasoning_effort="medium"' \
   -s danger-full-access \
   --skip-git-repo-check \
-  "Read AGENTS.md and docs/CODEX_AUTONOMOUS_BRIEF.md. Perform ONE single QA + publish pass ONLY over pending batches that have .ready_for_qa (inside output/auto_batches/*/) or output/gta6-batch3-tail/manifest.json (if .published does not exist). For each pending batch: (1) inspect manifest.json and run ffprobe verifying 1080x1920 + exact start_time=0.000000; (2) visually inspect every qa/*.png still for facecam framing, 2-line pill hook placement/emojis, and lower-third Hormozi captions; (3) drop or fix+rerender any broken clip; (4) release passing clips to GitHub via gh release create, save lean manifests/<tag>.json, insert into manifests/hub_config.json, rebuild docs/index.html with scripts/build_mobile_pack.py, commit manifests/ + docs/ + code fixes, and git push origin main; (5) remove .ready_for_qa and create .published (and delete .work/ inside published batch dirs). After handling pending batches once, EXIT cleanly immediately."
+  "Read AGENTS.md and docs/CODEX_AUTONOMOUS_BRIEF.md. Perform ONE single QA + publish pass ONLY over pending batches that have .ready_for_qa (inside output/auto_batches/*/) or output/gta6-batch3-tail/manifest.json (if .published does not exist). For each pending batch: (1) inspect manifest.json and run ffprobe verifying 1080x1920 + exact start_time=0.000000; (2) visually inspect every qa/*.png still for facecam framing, 2-line pill hook placement/emojis, and lower-third Hormozi captions; (3) drop or fix+rerender any broken clip; (4) release passing clips to GitHub via gh release create, save lean manifests/<tag>.json, insert into manifests/hub_config.json, rebuild docs/index.html with scripts/build_mobile_pack.py, commit manifests/ + docs/ + code fixes, and git push origin main; (5) schedule passing clips across all connected SocialClaw platforms (TikTok, Instagram, YouTube) via '.venv/bin/python scripts/socialclaw_publish.py --manifest <batch_dir>/manifest.json'; (6) remove .ready_for_qa and create .published (and delete .work/ inside published batch dirs). After handling pending batches once, EXIT cleanly immediately."
 
 echo "[$(date -Iseconds)] Codex QA pass completed."

@@ -127,6 +127,55 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertIn("91/100", html_viral)
         self.assertIn("Huge payoff at 0:14", html_viral)
 
+    def test_selector_fallback_and_strict_schema(self) -> None:
+        from viral_selector import DetailResponse, _strict_json_schema, build_gemini_model_candidates
+
+        models = build_gemini_model_candidates("gemini-3.5-flash")
+        self.assertEqual(models[0], "gemini-3.5-flash")
+        self.assertEqual(len(models), len(set(models)))
+        self.assertIn("gemini-3.6-flash", models)
+
+        schema = _strict_json_schema(DetailResponse)
+        self.assertFalse(schema.get("additionalProperties", True))
+        clip_def = schema["$defs"]["DetailClipModel"]
+        self.assertFalse(clip_def.get("additionalProperties", True))
+        self.assertEqual(set(clip_def["required"]), set(clip_def["properties"].keys()))
+
+    def test_socialclaw_slot_spacing_and_payloads(self) -> None:
+        from datetime import datetime, timezone
+        from socialclaw_publish import build_platform_post, compute_next_slot
+
+        now = datetime(2026, 11, 20, 14, 0, tzinfo=timezone.utc)
+        existing = [
+            datetime(2026, 11, 20, 14, 15, tzinfo=timezone.utc),
+            datetime(2026, 11, 20, 14, 45, tzinfo=timezone.utc),
+        ]
+        slot = compute_next_slot(existing, now_utc=now, spacing_minutes=30, daily_cap=45)
+        self.assertEqual(slot, datetime(2026, 11, 20, 15, 15, tzinfo=timezone.utc))
+
+        # Daily cap rollover to next UTC day
+        capped_slot = compute_next_slot(existing, now_utc=now, spacing_minutes=30, daily_cap=2)
+        self.assertEqual(capped_slot.strftime("%Y-%m-%d"), "2026-11-21")
+
+        item = {
+            "title": "Lacy Loses It in GTA 6!",
+            "caption": "Wild GTA 6 robbery! #GTA6 #LACY",
+            "tiktokCaption": "Bro tried a minivan getaway 💀 #GTA6 #LACY",
+            "instagramCaption": "Minivan chase goes wrong 😭 #GTA6 #Reels",
+            "youtubeTitle": "He Stole a Minivan in GTA 6!",
+            "pin": "Best moment yet",
+        }
+        tt = build_platform_post("tiktok", "tiktok:@ishowspeedfan177", item, "https://example.com/a.mp4", "2026-11-20T15:15:00.000Z")
+        self.assertNotIn("name", tt)
+        self.assertEqual(tt["settings"]["privacyLevel"], "PUBLIC_TO_EVERYONE")
+
+        ig = build_platform_post("instagram", "instagram:standalone:123", item, "https://example.com/a.mp4", "2026-11-20T15:15:00.000Z")
+        self.assertEqual(ig["settings"]["instagramPublishMode"], "reel")
+
+        yt = build_platform_post("youtube", "youtube:channel:abc", item, "https://example.com/a.mp4", "2026-11-20T15:15:00.000Z")
+        self.assertIn("#Shorts", yt["name"])
+        self.assertEqual(yt["settings"]["privacyStatus"], "public")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -71,4 +71,10 @@ Once all clips in the batch pass review:
      --config manifests/hub_config.json --output docs/index.html
    ```
 5. Commit ONLY code/manifests/docs (NEVER `.env`, `.creds/`, `.mp4`, or `.work/`) and `git push origin main`.
-6. Remove processed temporary MP4 caches under `output/<batch>/.work/` (and source chunks already completely processed) if `df -h /` free space drops below `25G`.
+6. Auto-schedule the verified clips across **TikTok, Instagram Reels, and YouTube Shorts** via **SocialClaw** (staggered 30m apart, capped at 45/day per platform):
+   ```bash
+   ~/video-engine/.venv/bin/python scripts/socialclaw_publish.py \
+     --manifest output/auto_batches/<batch_dir>/manifest.json
+   ```
+   Verify `scheduled_count` or inspect `socialclaw posts list --json`. Never commit `SOCIALCLAW_API_KEY`.
+7. Remove processed temporary MP4 caches under `output/<batch>/.work/` (and source chunks already completely processed) if `df -h /` free space drops below `25G`.
