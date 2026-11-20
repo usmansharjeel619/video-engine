@@ -134,6 +134,15 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertEqual(models[0], "gemini-3.5-flash")
         self.assertEqual(len(models), len(set(models)))
         self.assertIn("gemini-3.6-flash", models)
+        self.assertEqual(shortlist_target(300.0), 3)
+        self.assertEqual(shortlist_target(900.0), 4)
+
+        from auto_batch_worker import _daily_clip_count, _record_daily_clips
+        st: dict = {}
+        _record_daily_clips(st, 4, day_key="2026-11-20")
+        _record_daily_clips(st, 3, day_key="2026-11-20")
+        self.assertEqual(_daily_clip_count(st, day_key="2026-11-20"), 7)
+        self.assertEqual(_daily_clip_count(st, day_key="2026-11-21"), 0)
 
         schema = _strict_json_schema(DetailResponse)
         self.assertFalse(schema.get("additionalProperties", True))

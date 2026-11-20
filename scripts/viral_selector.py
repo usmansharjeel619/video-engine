@@ -239,7 +239,7 @@ def shortlist_target(video_duration: float) -> int:
         seconds = float(video_duration or 0.0)
     except (TypeError, ValueError):
         seconds = 0.0
-    return max(3, min(10, int(seconds // 90) + 2))
+    return max(3, min(4, int(seconds // 300) + 2))
 
 
 def score_batches(windows: list[dict[str, Any]], batch_size: int = 8) -> list[list[dict[str, Any]]]:
@@ -602,8 +602,11 @@ def _call_codex_structured(
             codex_model,
             "-c",
             f'model_reasoning_effort="{codex_reasoning}"',
+            "-c",
+            "mcp_servers.socialclaw.enabled=false",
             "-s",
             "read-only",
+            "--ephemeral",
             "--skip-git-repo-check",
             "--output-schema",
             str(schema_file),
@@ -618,7 +621,7 @@ def _call_codex_structured(
         print(f"  [Codex:{stage}] invoking {codex_model} ({codex_reasoning}, timeout={timeout_secs}s)...")
         proc = subprocess.run(
             cmd,
-            cwd=str(REPO_ROOT),
+            cwd=str(tmp_path),
             input=prompt,
             capture_output=True,
             text=True,
@@ -1032,6 +1035,15 @@ def analyze_and_select_viral_clips(
         language=language,
         instructions=instructions,
     )
+    if shortlisted and all("window_score" in w for w in shortlisted):
+        max_ws = max(int(w.get("window_score") or 0) for w in shortlisted)
+        gate_ws = max(60, int(min_virality) - 10)
+        if not allow_below_min and max_ws < gate_ws:
+            print(
+                f"Pass 1: Top window score ({max_ws}) below {gate_ws}; "
+                "skipping Pass 2 to conserve Codex credits."
+            )
+            return []
     selected = select_clips_gemini(
         client=client,
         model_name=resolved_model,

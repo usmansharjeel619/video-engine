@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,7 @@ STATE_FILE = BATCH_ROOT / "worker_state.json"
 SLICE_SECONDS = 900  # 15-minute continuous slices keep disk & whisper fast
 MIN_FREE_GB = 15.0
 MAX_PENDING_QA_BATCHES = 15
+DAILY_CLIP_TARGET = 30
 
 
 def _load_state() -> dict[str, Any]:
@@ -119,6 +121,23 @@ def _download_slice(vod_url: str, start_s: int, end_s: int, out_mp4: Path) -> bo
     return proc.returncode == 0 and out_mp4.exists() and out_mp4.stat().st_size > 1_000_000
 
 
+def _utc_day_key() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _daily_clip_count(state: dict[str, Any], day_key: str | None = None) -> int:
+    key = day_key or _utc_day_key()
+    return int((state.get("daily_clips") or {}).get(key, 0))
+
+
+def _record_daily_clips(state: dict[str, Any], count: int, day_key: str | None = None) -> None:
+    if count <= 0:
+        return
+    key = day_key or _utc_day_key()
+    daily = state.setdefault("daily_clips", {})
+    daily[key] = int(daily.get(key, 0)) + int(count)
+
+
 def _run_slice_pipeline(
     source_mp4: Path,
     src_cfg: dict[str, Any],
@@ -126,7 +145,7 @@ def _run_slice_pipeline(
     batch_seq: int,
     start_ts: str | None = None,
     end_ts: str | None = None,
-) -> tuple[bool, bool]:
+) -> tuple[bool, int]:
     slug = src_cfg.get("slug", "stream")
     batch_id = f"{slug}_auto_{batch_seq:03d}"
     out_dir = BATCH_ROOT / batch_id
@@ -160,6 +179,7 @@ def _run_slice_pipeline(
         str(src_cfg.get("min_virality", 80)),
         "--min-hook-score",
         str(src_cfg.get("min_hook_score", 85)),
+        "--no-ground-hooks",
         "--publish",
         "none",
     ]
@@ -203,14 +223,14 @@ def _run_slice_pipeline(
         }
         (out_dir / ".ready_for_qa").write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
         print(f"[worker] Queued {batch_id} for Codex QA ({len(passed_items)} QA-passed clips).")
-        return True, True
+        return True, len(passed_items)
 
     print(
         f"[worker] Slice {batch_id} finished (rc={proc.returncode}, clips={len(passed_items)}); "
         "cleaning up batch dir."
     )
     shutil.rmtree(out_dir, ignore_errors=True)
-    return (proc.returncode == 0), False
+    return (proc.returncode == 0), 0
 
 
 def process_one_iteration() -> bool:
@@ -227,6 +247,10 @@ def process_one_iteration() -> bool:
 
     sources = json.loads(SOURCES_FILE.read_text(encoding="utf-8"))
     state = _load_state()
+    today_clips = _daily_clip_count(state)
+    if today_clips >= DAILY_CLIP_TARGET:
+        print(f"[worker] Daily clip target reached ({today_clips}/{DAILY_CLIP_TARGET} clips today); pausing.")
+        return False
     done_set = set(state.get("processed_slices", []))
 
     # 1. Process any locally staged MP4s first
@@ -246,12 +270,13 @@ def process_one_iteration() -> bool:
                 "extra_tags": ["IShowSpeed", "GTA6", "GTAVI", "Gaming"],
             }
             seq = int(state.get("batch_seq", 1))
-            pipeline_ok, _ = _run_slice_pipeline(mp4, src_cfg, mp4.name, seq)
+            pipeline_ok, clip_count = _run_slice_pipeline(mp4, src_cfg, mp4.name, seq)
             if pipeline_ok:
                 state["processed_slices"].append(key)
-            state["batch_seq"] = seq + 1
+                _record_daily_clips(state, clip_count)
+                state["batch_seq"] = seq + 1
             _save_state(state)
-            return True
+            return pipeline_ok
 
     # 2. Walk configured remote VOD/channel sources in 15-minute slices
     for src_cfg in sources:
@@ -281,13 +306,14 @@ def process_one_iteration() -> bool:
                     tmp_mp4 = BATCH_ROOT / f"_dl_{vod_id}_{start_s}.mp4"
                     label = f"{_fmt_hhmmss(start_s)}–{_fmt_hhmmss(end_s)}"
                     if _download_slice(vod_url, start_s, end_s, tmp_mp4):
-                        pipeline_ok, _ = _run_slice_pipeline(tmp_mp4, src_cfg, label, seq)
+                        pipeline_ok, clip_count = _run_slice_pipeline(tmp_mp4, src_cfg, label, seq)
                     else:
-                        pipeline_ok = False
+                        pipeline_ok, clip_count = False, 0
                     if tmp_mp4.exists():
                         tmp_mp4.unlink()
                     if pipeline_ok:
                         state["processed_slices"].append(slice_key)
+                        _record_daily_clips(state, clip_count)
                         state["batch_seq"] = seq + 1
                     _save_state(state)
                     return pipeline_ok
