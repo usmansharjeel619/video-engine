@@ -1,6 +1,7 @@
 import argparse
 import html
 import json
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -51,8 +52,10 @@ def main() -> None:
 
     folders = json.loads(args.config.read_text(encoding="utf-8"))
     folder_blocks = []
+    legacy_folder_idx = 0
 
     for f_idx, folder in enumerate(folders):
+        stable_ids = folder.get("stableIds", False)
         f_name = html.escape(folder["folder"])
         f_sub = html.escape(folder.get("subtitle", ""))
         batch_blocks = []
@@ -60,10 +63,15 @@ def main() -> None:
             b_name = html.escape(batch["batch"])
             base_url = batch.get("baseUrl", "")
             items = json.loads(Path(batch["manifest"]).read_text(encoding="utf-8"))
-            cards = [
-                build_card(it, f"f{f_idx}-b{b_idx}-c{c_idx}", base_url)
-                for c_idx, it in enumerate(items, 1)
-            ]
+            cards = []
+            for c_idx, item in enumerate(items, 1):
+                if stable_ids:
+                    identity = json.dumps([batch["manifest"], item["clip"]]).encode("utf-8")
+                    uid = f"clip-{sha256(identity).hexdigest()}"
+                else:
+                    # Keep existing localStorage keys when a new folder is inserted.
+                    uid = f"f{legacy_folder_idx}-b{b_idx}-c{c_idx}"
+                cards.append(build_card(item, uid, base_url))
             batch_blocks.append(
                 f"""
       <details class="batch" {'open' if f_idx == 0 and b_idx == 0 else ''}>
@@ -90,6 +98,8 @@ def main() -> None:
       </div>
     </details>"""
         )
+        if not stable_ids:
+            legacy_folder_idx += 1
 
     page = f"""<!doctype html>
 <html lang="en">
@@ -214,7 +224,7 @@ renderState();
 </html>"""
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(page, encoding="utf-8")
+    args.output.write_text("\n".join(line.rstrip() for line in page.split("\n")), encoding="utf-8")
     print("Wrote folder-structured Mobile Upload Hub ->", args.output)
 
 

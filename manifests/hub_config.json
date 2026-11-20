@@ -1,5 +1,22 @@
 [
   {
+    "folder": "Lacy — GTA 6 Early Access Marathon",
+    "subtitle": "Twitch Lacy · Strict 2s Hooks · Check MVR before CR submit",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "Lacy GTA 6 #8 (01:30:00–01:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-008",
+        "manifest": "manifests/lacy-gta6-auto-008.json"
+      },
+      {
+        "batch": "Lacy GTA 6 #7 (01:15:00–01:30:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-007",
+        "manifest": "manifests/lacy-gta6-auto-007.json"
+      }
+    ]
+  },
+  {
     "folder": "Lacy — GTA 6",
     "subtitle": "Split-Screen Facecam + GTA 6 · Strict 2s Hooks · #LACY #GTA6",
     "batches": [
