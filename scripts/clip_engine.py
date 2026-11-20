@@ -261,22 +261,9 @@ def compute_jump_cut_segments(
 
     kept = [(round(a, 3), round(b, 3)) for a, b in intervals if b - a >= 0.25]
     if not kept:
-        return [(0.0, rel_dur)], words
+        kept = [(0.0, rel_dur)]
 
-    # Build re-timed words for the concatenated timeline
-    retimed: list[dict[str, Any]] = []
-    acc = 0.0
-    for seg_s, seg_e in kept:
-        for w in words:
-            rw_s = w["start"] - clip_start
-            rw_e = w["end"] - clip_start
-            if rw_e >= seg_s and rw_s <= seg_e:
-                new_s = acc + max(0.0, rw_s - seg_s)
-                new_e = acc + min(seg_e - seg_s, max(0.05, rw_e - seg_s))
-                retimed.append({"word": w["word"], "start": round(new_s, 3), "end": round(new_e, 3)})
-        acc += seg_e - seg_s
-
-    return kept, retimed
+    return kept, _retime_words(words, clip_start, kept)
 
 
 def prepend_flash_hook(
@@ -292,18 +279,23 @@ def prepend_flash_hook(
     followed by the main kept intervals, and re-time all captions accurately.
     """
     rel_dur = max(2.5, clip_end - clip_start)
-    if peak_offset < 3.0:
-        return intervals, words
+    combined = intervals
+    if peak_offset >= 3.0:
+        f_start = round(max(0.0, peak_offset - 0.5), 3)
+        f_end = round(min(rel_dur, f_start + flash_dur), 3)
+        if f_end - f_start >= 1.0:
+            combined = [(f_start, f_end), *intervals]
 
-    f_start = round(max(0.0, peak_offset - 0.5), 3)
-    f_end = round(min(rel_dur, f_start + flash_dur), 3)
-    if f_end - f_start < 1.0:
-        return intervals, words
+    return combined, _retime_words(words, clip_start, combined)
 
-    combined = [(f_start, f_end), *intervals]
+
+def _retime_words(
+    words: list[dict[str, Any]], clip_start: float, intervals: list[tuple[float, float]]
+) -> list[dict[str, Any]]:
+    """Map source word timestamps to the rendered timeline."""
     retimed: list[dict[str, Any]] = []
     acc = 0.0
-    for seg_s, seg_e in combined:
+    for seg_s, seg_e in intervals:
         for w in words:
             rw_s = w["start"] - clip_start
             rw_e = w["end"] - clip_start
@@ -312,7 +304,7 @@ def prepend_flash_hook(
                 new_e = acc + min(seg_e - seg_s, max(0.05, rw_e - seg_s))
                 retimed.append({"word": w["word"], "start": round(new_s, 3), "end": round(new_e, 3)})
         acc += seg_e - seg_s
-    return combined, retimed
+    return retimed
 
 
 def remap_time_to_intervals(rel_t: float, intervals: list[tuple[float, float]] | None) -> float:
