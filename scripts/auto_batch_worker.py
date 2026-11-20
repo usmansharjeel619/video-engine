@@ -288,9 +288,9 @@ def process_one_iteration() -> bool:
                         tmp_mp4.unlink()
                     if pipeline_ok:
                         state["processed_slices"].append(slice_key)
-                    state["batch_seq"] = seq + 1
+                        state["batch_seq"] = seq + 1
                     _save_state(state)
-                    return True
+                    return pipeline_ok
                 start_s += SLICE_SECONDS
 
     return False
