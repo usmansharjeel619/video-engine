@@ -160,8 +160,8 @@ CLIP RULES:
 - Stay within the candidate window boundaries (referencing exact word timestamps provided).
 - THE 2-SECOND RULE (NON-NEGOTIABLE): Second 0.0-2.0 of the clip must be the single most explosive thing in it — a scream, a shocked outburst, a crazy one-liner, a gunshot/crash, a jaw-drop reveal. NOT setup, NOT "yo chat", NOT walking around, NOT a question that gets answered later. Set `start` so the first spoken word IS the hook. If a moment has no explosive opening, DO NOT return it.
 - `first_two_seconds`: write the exact words spoken / action seen in seconds 0-2 of your chosen start.
-- `hook_score`: brutally honest 0-100 for ONLY those first 2 seconds. 90+ = a stranger scrolling at full speed would stop instantly. 70 = decent. Under 70 = weak. Most moments are under 70 — say so.
-- QUALITY OVER QUANTITY: Returning 1 banger is far better than 4 average clips. Returning zero is acceptable if nothing is truly viral.
+- `hook_score`: honest 0-100 for ONLY those first 2 seconds. 90+ = instant scroll-stopper, 74-89 = strong action/reaction hook, under 70 = slow setup.
+- YIELD & PRECISION: Target {min_clips} to {max_clips} distinct standalone clips across the shortlisted windows (do NOT stop after 1 if other windows also have 72+ moments; return 0 only if the whole chunk is dull/menu filler).
 - Do not cut mid-word or mid-phrase; snap cleanly to natural pauses around word boundaries.
 - STANDS ALONE: A cold viewer scrolling TikTok/Reels/Shorts must immediately understand the premise without seeing the rest of the VOD. Never start on an unexplained pronoun ("that thing", "so anyway"). Move start slightly earlier if 2-4s of setup makes the payoff land harder — never cut off the payoff!
 - HOW MANY: Return UP TO {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window but only return genuine bangers (never pad with weak filler).

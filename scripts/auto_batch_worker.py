@@ -346,6 +346,7 @@ def _run_slice_pipeline(
         str(src_cfg.get("min_virality", 80)),
         "--min-hook-score",
         str(src_cfg.get("min_hook_score", 85)),
+        "--no-trim-silence",
         "--no-ground-hooks",
         "--publish",
         "none",
