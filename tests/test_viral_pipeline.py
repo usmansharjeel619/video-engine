@@ -135,9 +135,19 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertEqual(len(models), len(set(models)))
         self.assertIn("gemini-3.6-flash", models)
         self.assertEqual(shortlist_target(300.0), 3)
-        self.assertEqual(shortlist_target(900.0), 4)
+        self.assertEqual(shortlist_target(900.0), 6)
 
-        from auto_batch_worker import _daily_clip_count, _record_daily_clips
+        from auto_batch_worker import _daily_clip_count, _record_daily_clips, parse_m3u8_slice
+        sample_m3u8 = (
+            "#EXTM3U\n#EXT-X-VERSION:6\n#EXT-X-TARGETDURATION:10\n"
+            '#EXT-X-MAP:URI="init-0.mp4"\n'
+            "#EXTINF:10.0,\n89.mp4\n#EXTINF:10.0,\n90-muted.mp4\n#EXTINF:10.0,\n91.mp4\n"
+        )
+        hdrs, segs, muted = parse_m3u8_slice(sample_m3u8, "https://cdn.test/v/720p60/index.m3u8", 5, 25)
+        self.assertEqual(len(segs), 3)
+        self.assertEqual(muted, 1)
+        self.assertEqual(segs[0][2], "https://cdn.test/v/720p60/init-0.mp4")
+        self.assertEqual(segs[1][1], "https://cdn.test/v/720p60/90-muted.mp4")
         st: dict = {}
         _record_daily_clips(st, 4, day_key="2026-11-20")
         _record_daily_clips(st, 3, day_key="2026-11-20")

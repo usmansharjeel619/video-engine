@@ -167,7 +167,7 @@ CLIP RULES:
 - HOW MANY: Return UP TO {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window but only return genuine bangers (never pad with weak filler).
 - DIVERSITY: Never return two clips covering the same joke, point, or beat.
 {instructions_block}{keyword_block}
-HOOK PLAYBOOK — craft `viral_hook_text` (max 10 words + 1-2 fitting emojis in {language}):
+HOOK PLAYBOOK — craft `viral_hook_text` (STRICT MAX 7 WORDS + 1-2 fitting emojis, <= 45 chars total, in {language}, so it NEVER wraps onto 3 lines):
 - Make it laser-specific to THIS clip's concrete event, number, character, or reaction — NEVER a generic video summary.
 - Strong proven patterns (adapt in {language}):
   * Reaction/Shock: "HE ACTUALLY LOST IT OVER THIS 😭🔥"
@@ -239,7 +239,7 @@ def shortlist_target(video_duration: float) -> int:
         seconds = float(video_duration or 0.0)
     except (TypeError, ValueError):
         seconds = 0.0
-    return max(3, min(4, int(seconds // 300) + 2))
+    return max(3, min(6, int(seconds // 200) + 2))
 
 
 def score_batches(windows: list[dict[str, Any]], batch_size: int = 8) -> list[list[dict[str, Any]]]:
@@ -1037,7 +1037,7 @@ def analyze_and_select_viral_clips(
     )
     if shortlisted and all("window_score" in w for w in shortlisted):
         max_ws = max(int(w.get("window_score") or 0) for w in shortlisted)
-        gate_ws = max(60, int(min_virality) - 10)
+        gate_ws = max(56, int(min_virality) - 14)
         if not allow_below_min and max_ws < gate_ws:
             print(
                 f"Pass 1: Top window score ({max_ws}) below {gate_ws}; "

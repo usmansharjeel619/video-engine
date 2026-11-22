@@ -13,13 +13,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPTS_DIR.parent
@@ -29,8 +37,9 @@ STATE_FILE = BATCH_ROOT / "worker_state.json"
 
 SLICE_SECONDS = 900  # 15-minute continuous slices keep disk & whisper fast
 MIN_FREE_GB = 15.0
-MAX_PENDING_QA_BATCHES = 15
-DAILY_CLIP_TARGET = 30
+MAX_PENDING_QA_BATCHES = 18
+DAILY_CLIP_TARGET = 36
+MAX_SLICE_RETRIES = 2
 
 
 def _load_state() -> dict[str, Any]:
@@ -97,11 +106,164 @@ def _get_duration(vod_url: str) -> float:
         return 0.0
 
 
-def _download_slice(vod_url: str, start_s: int, end_s: int, out_mp4: Path) -> bool:
-    section = f"*{_fmt_hhmmss(start_s)}-{_fmt_hhmmss(end_s)}"
+def parse_m3u8_slice(
+    m3u8_text: str,
+    m3u8_url: str,
+    start_s: int,
+    end_s: int,
+) -> tuple[list[str], list[tuple[str, str, str | None]], int]:
+    """Parse an HLS playlist and return (header_lines, [(extinf, seg_url, map_url)], muted_count)."""
+    base = m3u8_url.rsplit("/", 1)[0] + "/"
+    headers: list[str] = []
+    segs: list[tuple[str, str, str | None]] = []
+    cur_t = 0.0
+    cur_map: str | None = None
+    last_inf: tuple[str, float] | None = None
+
+    for ln in m3u8_text.splitlines():
+        s = ln.strip()
+        if not s:
+            continue
+        if s.startswith("#EXT-X-MAP:"):
+            m = re.search(r'URI="([^"]+)"', s)
+            if m:
+                cur_map = urllib.parse.urljoin(base, m.group(1))
+        elif s.startswith(("#EXTM3U", "#EXT-X-VERSION", "#EXT-X-TARGETDURATION", "#EXT-X-PLAYLIST-TYPE")):
+            headers.append(s)
+        elif s.startswith("#EXTINF:"):
+            try:
+                dur = float(s.split(":", 1)[1].split(",")[0])
+            except ValueError:
+                dur = 2.0
+            last_inf = (s, dur)
+        elif not s.startswith("#") and last_inf is not None:
+            inf_ln, dur = last_inf
+            seg_end = cur_t + dur
+            if seg_end > start_s and cur_t < end_s:
+                seg_url = urllib.parse.urljoin(base, s)
+                segs.append((inf_ln, seg_url, cur_map))
+            cur_t = seg_end
+            last_inf = None
+
+    muted_count = sum(1 for _, seg_url, _ in segs if "-muted" in seg_url)
+    return headers, segs, muted_count
+
+
+def _build_http_session() -> requests.Session:
+    session = requests.Session()
+    retry = Retry(total=3, backoff_factor=1.0, status_forcelist=(429, 500, 502, 503, 504))
+    adapter = HTTPAdapter(pool_connections=12, pool_maxsize=12, max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+def _download_slice_fast_hls(vod_url: str, start_s: int, end_s: int, out_mp4: Path) -> str:
+    """
+    Fast parallel 720p60 HLS segment downloader. Returns 'ok', 'muted_skip', or 'fallback'.
+    Avoids ffmpeg remote HLS seek hangs on Twitch fMP4 / -muted.mp4 playlists.
+    """
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "yt_dlp", "-g", "-f", "720p60/best[height<=720]/best", vod_url],
+            capture_output=True,
+            text=True,
+            timeout=45,
+            check=False,
+        )
+        m3u8_url = (proc.stdout or "").strip().splitlines()[0] if proc.returncode == 0 and proc.stdout.strip() else ""
+        if not m3u8_url or ".m3u8" not in m3u8_url:
+            return "fallback"
+
+        session = _build_http_session()
+        m3u8_resp = session.get(m3u8_url, timeout=20)
+        m3u8_resp.raise_for_status()
+        headers, segs, muted_count = parse_m3u8_slice(m3u8_resp.text, m3u8_url, start_s, end_s)
+        if not segs:
+            return "fallback"
+
+        if muted_count / len(segs) >= 0.85:
+            print(f"[worker] Skipping muted slice ({muted_count}/{len(segs)} muted segments) for {vod_url}")
+            return "muted_skip"
+
+        print(f"[worker] Fast parallel HLS ({len(segs)} segs, muted={muted_count}) -> {out_mp4.name}")
+        with tempfile.TemporaryDirectory(prefix="hls_dl_") as tmpdir:
+            tmp = Path(tmpdir)
+            unique_urls: dict[str, Path] = {}
+            for _, seg_url, map_url in segs:
+                if map_url and map_url not in unique_urls:
+                    idx = len(unique_urls)
+                    unique_urls[map_url] = tmp / f"map_{idx}.mp4"
+                if seg_url not in unique_urls:
+                    ext = Path(urllib.parse.urlparse(seg_url).path).suffix or ".ts"
+                    idx = len(unique_urls)
+                    unique_urls[seg_url] = tmp / f"seg_{idx:04d}{ext}"
+
+            def _fetch(item: tuple[str, Path]) -> None:
+                url, dest = item
+                r = session.get(url, timeout=(10, 30))
+                r.raise_for_status()
+                dest.write_bytes(r.content)
+
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                list(pool.map(_fetch, unique_urls.items()))
+
+            local_m3u8 = tmp / "slice.m3u8"
+            out_lines = list(headers or ["#EXTM3U", "#EXT-X-VERSION:6"])
+            prev_map: str | None = None
+            for idx, (inf_ln, seg_url, map_url) in enumerate(segs):
+                if map_url and map_url != prev_map:
+                    if idx > 0:
+                        out_lines.append("#EXT-X-DISCONTINUITY")
+                    out_lines.append(f'#EXT-X-MAP:URI="{unique_urls[map_url].name}"')
+                    prev_map = map_url
+                out_lines.append(inf_ln)
+                out_lines.append(unique_urls[seg_url].name)
+            out_lines.append("#EXT-X-ENDLIST")
+            local_m3u8.write_text("\n".join(out_lines) + "\n", encoding="utf-8")
+
+            remux = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-allowed_extensions",
+                    "ALL",
+                    "-i",
+                    str(local_m3u8),
+                    "-c",
+                    "copy",
+                    "-movflags",
+                    "+faststart",
+                    str(out_mp4),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=90,
+                check=False,
+            )
+            if remux.returncode == 0 and out_mp4.exists() and out_mp4.stat().st_size > 1_000_000:
+                return "ok"
+            print(f"[worker] Local HLS remux failed ({remux.returncode}): {remux.stderr[:200]}")
+            return "fallback"
+    except Exception as exc:
+        print(f"[worker] Fast HLS error ({exc}); falling back to yt-dlp.")
+        return "fallback"
+
+
+def _download_slice(vod_url: str, start_s: int, end_s: int, out_mp4: Path) -> str:
+    """Download slice and return 'ok', 'muted_skip', or 'failed'."""
     out_mp4.parent.mkdir(parents=True, exist_ok=True)
     if out_mp4.exists():
         out_mp4.unlink()
+
+    fast_status = _download_slice_fast_hls(vod_url, start_s, end_s, out_mp4)
+    if fast_status in ("ok", "muted_skip"):
+        return fast_status
+
+    section = f"*{_fmt_hhmmss(start_s)}-{_fmt_hhmmss(end_s)}"
     cmd = [
         sys.executable,
         "-m",
@@ -109,16 +271,21 @@ def _download_slice(vod_url: str, start_s: int, end_s: int, out_mp4: Path) -> bo
         "--download-sections",
         section,
         "-f",
-        "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]/best",
+        "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best",
         "--merge-output-format",
         "mp4",
         "-o",
         str(out_mp4),
         vod_url,
     ]
-    print(f"[worker] Downloading {section} from {vod_url} -> {out_mp4}")
-    proc = subprocess.run(cmd, check=False)
-    return proc.returncode == 0 and out_mp4.exists() and out_mp4.stat().st_size > 1_000_000
+    print(f"[worker] Fallback downloading {section} from {vod_url} -> {out_mp4}")
+    try:
+        proc = subprocess.run(cmd, timeout=360, check=False)
+        if proc.returncode == 0 and out_mp4.exists() and out_mp4.stat().st_size > 1_000_000:
+            return "ok"
+    except subprocess.TimeoutExpired:
+        print(f"[worker] Download timed out after 360s for {section}")
+    return "failed"
 
 
 def _utc_day_key() -> str:
@@ -305,16 +472,28 @@ def process_one_iteration() -> bool:
                     seq = int(state.get("batch_seq", 1))
                     tmp_mp4 = BATCH_ROOT / f"_dl_{vod_id}_{start_s}.mp4"
                     label = f"{_fmt_hhmmss(start_s)}–{_fmt_hhmmss(end_s)}"
-                    if _download_slice(vod_url, start_s, end_s, tmp_mp4):
+                    dl_status = _download_slice(vod_url, start_s, end_s, tmp_mp4)
+                    if dl_status == "muted_skip":
+                        pipeline_ok, clip_count = True, 0
+                    elif dl_status == "ok":
                         pipeline_ok, clip_count = _run_slice_pipeline(tmp_mp4, src_cfg, label, seq)
                     else:
                         pipeline_ok, clip_count = False, 0
+
                     if tmp_mp4.exists():
                         tmp_mp4.unlink()
+
+                    retries = state.setdefault("dl_retries", {})
                     if pipeline_ok:
                         state["processed_slices"].append(slice_key)
+                        retries.pop(slice_key, None)
                         _record_daily_clips(state, clip_count)
                         state["batch_seq"] = seq + 1
+                    else:
+                        retries[slice_key] = int(retries.get(slice_key, 0)) + 1
+                        if retries[slice_key] >= MAX_SLICE_RETRIES:
+                            print(f"[worker] Skipping persistently failing slice {slice_key} after {retries[slice_key]} tries.")
+                            state["processed_slices"].append(slice_key)
                     _save_state(state)
                     return pipeline_ok
                 start_s += SLICE_SECONDS
