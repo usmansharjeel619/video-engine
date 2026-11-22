@@ -1,5 +1,17 @@
 [
   {
+    "folder": "YourRAGE — $5,000 GTA 6 Pool",
+    "subtitle": "Twitch yourragegaming · High-Hook Clips",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "YourRAGE #85 (00:00:00–00:15:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-085",
+        "manifest": "manifests/yourrage-gta6-auto-085.json"
+      }
+    ]
+  },
+  {
     "folder": "Lacy — GTA 6 Early Access Marathon",
     "subtitle": "Twitch Lacy · Strict 2s Hooks · Check MVR before CR submit",
     "stableIds": true,
