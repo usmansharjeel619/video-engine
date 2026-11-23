@@ -5,6 +5,11 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "YourRAGE #109 (05:30:00–05:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-109",
+        "manifest": "manifests/yourrage-gta6-auto-109.json"
+      },
+      {
         "batch": "YourRAGE #99 (03:00:00–03:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-099",
         "manifest": "manifests/yourrage-gta6-auto-099.json"
