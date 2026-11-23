@@ -197,6 +197,23 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertIn("#Shorts", yt["name"])
         self.assertEqual(yt["settings"]["privacyStatus"], "public")
 
+        from buffer_publish import _normalize_service, build_buffer_create_input
+        from clip_engine import resolve_split_crop
+
+        self.assertEqual(_normalize_service("tiktok"), "tiktok")
+        self.assertEqual(_normalize_service("instagramBusiness"), "instagram")
+        self.assertEqual(_normalize_service("youtube"), "youtube")
+        buf_yt = build_buffer_create_input("youtube", "ch_1", item, "https://example.com/a.mp4", "2026-11-24T12:00:00.000Z")
+        self.assertIn("#Shorts", buf_yt["metadata"]["youtube"]["title"])
+        self.assertEqual(buf_yt["assets"][0]["video"]["url"], "https://example.com/a.mp4")
+
+        lay_l, _, side_l = resolve_split_crop(Path("nonexistent.mp4"), 1.0, "tl")
+        self.assertEqual((lay_l, side_l), ("split", "left"))
+        lay_r, _, side_r = resolve_split_crop(Path("nonexistent.mp4"), 1.0, "tr")
+        self.assertEqual((lay_r, side_r), ("split", "right"))
+        lay_a, _, side_a = resolve_split_crop(Path("nonexistent.mp4"), 1.0, "auto")
+        self.assertEqual((lay_a, side_a), ("center", "center"))
+
 
 if __name__ == "__main__":
     unittest.main()

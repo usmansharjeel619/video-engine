@@ -364,11 +364,14 @@ def _detect_faces_normalized(frame: Any) -> list[tuple[float, float, float, floa
     return results
 
 
-def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> tuple[float, float, float, float]:
+def resolve_split_crop(
+    source_video: Path, sample_time: float, cam_pos: str
+) -> tuple[str, tuple[float, float, float, float], str]:
     """
-    Return normalized (x, y, w, h) facecam crop rectangle for 16:9 -> 1080x700 top panel.
-    Supports 'auto' (via YuNet/OpenCV face detection prioritizing streamer edge webcams)
-    or presets: tl, tr, bl, br, center, or explicit x,y,w,h.
+    Resolve effective layout and webcam/side alignment for a clip.
+    Returns (effective_layout, (cx, cy, cw, ch), cam_side ['left'|'right'|'center']).
+    In 'auto' mode, switches fullscreen talking-head / no-cam frames to 'center' so split
+    never duplicates a fullscreen facecam or crops an empty corner wall.
     """
     presets: dict[str, tuple[float, float, float, float]] = {
         "tl": (0.0, 0.0, 0.34, 0.38),
@@ -378,18 +381,20 @@ def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> 
         "center": (0.25, 0.10, 0.50, 0.56),
     }
     if cam_pos in presets:
-        return presets[cam_pos]
+        side = "left" if cam_pos in ("tl", "bl") else ("right" if cam_pos in ("tr", "br") else "center")
+        return ("split", presets[cam_pos], side)
     if "," in cam_pos:
         parts = [float(p.strip()) for p in cam_pos.split(",")]
         if len(parts) == 4:
-            return (parts[0], parts[1], parts[2], parts[3])
+            side = "left" if parts[0] < 0.3 else ("right" if parts[0] + parts[2] > 0.7 else "center")
+            return ("split", (parts[0], parts[1], parts[2], parts[3]), side)
 
     try:
         import cv2
 
         cap = cv2.VideoCapture(str(source_video))
         all_faces: list[tuple[float, float, float, float, float]] = []
-        for offset_s in (0.0, 2.0, 5.0):
+        for offset_s in (0.0, 2.0, 5.0, 8.0):
             cap.set(cv2.CAP_PROP_POS_MSEC, max(0.0, sample_time + offset_s) * 1000.0)
             ok, frame = cap.read()
             if not ok or frame is None:
@@ -400,28 +405,40 @@ def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> 
                 break
         cap.release()
         if not all_faces:
-            return presets["tl"]
+            return ("center", presets["center"], "center")
 
         # Prioritize edge/perimeter streamer webcams over in-game characters near screen center
         edge_faces = [
             f for f in all_faces
             if (f[0] < 0.32 or f[0] > 0.68 or f[1] < 0.30 or f[1] > 0.72) and f[3] < 0.18
         ]
-        cx, cy, _, fh_n, _ = max(edge_faces or all_faces, key=lambda f: f[4])
+        chosen = max(edge_faces or all_faces, key=lambda f: f[4])
+        cx, cy, _, fh_n, _ = chosen
+
+        # If only a huge centered talking-head is found (e.g. Just Chatting), avoid duplicating in split
+        if not edge_faces and fh_n >= 0.16 and 0.25 <= cx <= 0.75:
+            return ("center", presets["center"], "center")
 
         # Tight 16:10 webcam window around detected face center; snaps cleanly to left/right borders
         box_w = max(0.22, min(0.34, fh_n * 3.8))
         box_h = max(0.24, min(0.38, box_w * 1.1))
-        if cx < 0.14:
+        if cx < 0.18:
             bx = 0.0
-        elif cx > 0.86:
+        elif cx > 0.82:
             bx = 1.0 - box_w
         else:
             bx = max(0.0, min(1.0 - box_w, cx - box_w / 2.0))
         by = max(0.0, min(1.0 - box_h, cy - box_h * 0.42))
-        return (round(bx, 3), round(by, 3), round(box_w, 3), round(box_h, 3))
+        side = "left" if bx < 0.20 else ("right" if bx + box_w > 0.80 else "center")
+        return ("split", (round(bx, 3), round(by, 3), round(box_w, 3), round(box_h, 3)), side)
     except Exception:
-        return presets["tl"]
+        return ("split", presets["tl"], "left")
+
+
+def detect_facecam_box(source_video: Path, sample_time: float, cam_pos: str) -> tuple[float, float, float, float]:
+    """Return normalized (x, y, w, h) facecam crop rectangle for 16:9 -> 1080x700 top panel."""
+    _, box, _ = resolve_split_crop(source_video, sample_time, cam_pos)
+    return box
 
 
 def build_kinetic_ass(
@@ -548,7 +565,13 @@ def render_portrait_clip(
         v_in, a_in = "[vseg0]", "[aseg0]"
 
     # Step 2: Portrait framing
-    if layout == "blur":
+    effective_layout = layout
+    cam_box = (0.0, 0.0, 0.34, 0.38)
+    cam_side = "center"
+    if layout == "split":
+        effective_layout, cam_box, cam_side = resolve_split_crop(source_video, abs_start + duration * 0.3, cam_pos)
+
+    if effective_layout == "blur":
         filter_parts.append(
             f"{v_in}split=2[bg][fg];"
             "[bg]scale=1080:1920:force_original_aspect_ratio=increase,"
@@ -556,8 +579,8 @@ def render_portrait_clip(
             "[fg]scale=1080:-2:force_original_aspect_ratio=decrease[fg_scaled];"
             "[bg_blur][fg_scaled]overlay=(W-w)/2:(H-h)/2[base]"
         )
-    elif layout == "split":
-        cx, cy, cw, ch = detect_facecam_box(source_video, abs_start + duration * 0.3, cam_pos)
+    elif effective_layout == "split":
+        cx, cy, cw, ch = cam_box
         cam_filter = (
             f"[vcam_src]crop=iw*{cw}:ih*{ch}:iw*{cx}:ih*{cy},"
             "scale=1080:700:force_original_aspect_ratio=increase,crop=1080:700"
@@ -569,10 +592,17 @@ def render_portrait_clip(
                 f",scale=w='if(between(t,{p0:.2f},{p1:.2f}),1166,1080)':"
                 f"h='if(between(t,{p0:.2f},{p1:.2f}),756,700)':eval=frame,crop=1080:700"
             )
+        # Keep bottom gameplay crop clear of left/right corner webcam overlays
+        if cam_side == "right":
+            game_crop_x = "0"
+        elif cam_side == "left":
+            game_crop_x = "(iw-ih*1080/1220)"
+        else:
+            game_crop_x = "(iw-ih*1080/1220)/2"
         filter_parts.append(
             f"{v_in}split=2[vcam_src][vgame_src];"
             f"{cam_filter}[cam_top];"
-            "[vgame_src]crop=ih*1080/1220:ih:(iw-ih*1080/1220)/2:0,"
+            f"[vgame_src]crop=ih*1080/1220:ih:{game_crop_x}:0,"
             "scale=1080:1220:flags=lanczos[game_bot];"
             "[cam_top][game_bot]vstack=inputs=2,drawbox=x=0:y=698:w=1080:h=4:color=black@0.85:t=fill,setsar=1[base]"
         )
@@ -595,13 +625,14 @@ def render_portrait_clip(
     if hook_png is not None and hook_png.exists():
         h_dur = max(0.8, float(hook_duration))
         fade_st = max(0.4, h_dur - 0.35)
+        effective_hook_y = 260 if (layout == "split" and effective_layout == "center") else int(hook_y)
         filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[with_caps]")
         inputs.extend(["-loop", "1", "-framerate", "30", "-i", str(hook_png)])
         hook_idx = next_idx
         next_idx += 1
         filter_parts.append(f"[{hook_idx}:v]format=rgba,fade=t=out:st={fade_st:.2f}:d=0.35:alpha=1[hook_ov]")
         filter_parts.append(
-            f"[with_caps][hook_ov]overlay=(W-w)/2:{int(hook_y)}:enable='between(t,0,{h_dur:.2f})':shortest=1[v]"
+            f"[with_caps][hook_ov]overlay=(W-w)/2:{effective_hook_y}:enable='between(t,0,{h_dur:.2f})':shortest=1[v]"
         )
     else:
         filter_parts.append(f"{cap_in}ass='{ass_escaped}'{fonts_arg}[v]")

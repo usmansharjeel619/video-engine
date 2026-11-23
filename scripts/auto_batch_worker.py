@@ -475,8 +475,15 @@ def process_one_iteration() -> bool:
             _save_state(state)
             return pipeline_ok
 
-    # 2. Walk configured remote VOD/channel sources in 15-minute slices
-    for src_cfg in sources:
+    # 2. Walk configured remote VOD/channel sources round-robin (1 slice per source per turn)
+    if not sources:
+        return False
+    n_sources = len(sources)
+    start_idx = int(state.get("next_source_idx", 0)) % n_sources
+
+    for offset in range(n_sources):
+        src_idx = (start_idx + offset) % n_sources
+        src_cfg = sources[src_idx]
         if not src_cfg.get("enabled", True):
             continue
         entries = _probe_vods(src_cfg["url"], max_items=int(src_cfg.get("max_vods", 2)))
@@ -524,6 +531,7 @@ def process_one_iteration() -> bool:
                         if retries[slice_key] >= MAX_SLICE_RETRIES:
                             print(f"[worker] Skipping persistently failing slice {slice_key} after {retries[slice_key]} tries.")
                             state["processed_slices"].append(slice_key)
+                    state["next_source_idx"] = (src_idx + 1) % n_sources
                     _save_state(state)
                     return pipeline_ok
                 start_s += SLICE_SECONDS
