@@ -10,8 +10,8 @@
 ### DO
 - **Run heavy work on the cloud server (`ubuntu@100.76.60.83`)**: Use the Oracle Cloud ARM64 (`aarch64`, Ubuntu 24.04) server for `yt-dlp` downloads, `faster-whisper`, FFmpeg renders, Docker containers, and OpenShorts jobs.
 - **Read `.agents/skills/viral-stream-clipper/SKILL.md`** before creating custom FFmpeg clips or Content Rewards batches.
-- **Use `gemini-3-flash-preview`** as the Gemini model (`GEMINI_MODEL=gemini-3-flash-preview`). It is the verified free-tier working model on the user's key.
-- **Pass YouTube cookies** from `~/video-engine/.creds/youtube_cookies.txt` when calling `yt-dlp` on the cloud server (Oracle IPs hit YouTube bot checks otherwise).
+- **Primary Selector Backend (`Codex`):** Viral moment selection defaults to **`codex exec -m gpt-6.2-sol` (`medium` reasoning)** in an isolated `--ephemeral` temp sandbox (`VIRAL_SELECTOR_BACKEND=codex` in server `.env`), with `auto_batch_worker.py` using `--no-trim-silence` and `--no-ground-hooks` to prevent short-duration drops and duplicate vision calls.
+- **Auto-Publishing (`SocialClaw`):** Connected accounts (**TikTok** `tiktok:@ishowspeedfan177`, **Instagram** `ishow_speedfan619`, **YouTube** `IShowSpeed Fan`) publish automatically via `scripts/socialclaw_publish.py` (`SOCIALCLAW_API_KEY` in untracked `.env`, **never committed**). Enforces `30m` staggered slots, `45/day` TikTok & Instagram, and **`9/rolling-24h` YouTube** (`uploadLimitExceeded` safe cap).
 - **Verify every rendered clip before delivering**:
   - Run `ffprobe` to confirm `start_time=0.000000` on both video and audio streams (no A/V desync).
   - Extract PNG stills (`ffmpeg -ss ... -frames:v 1`) and visually inspect framing, facecam crop, seam captions, and hook placement.
@@ -55,16 +55,13 @@ ssh -i "$env:USERPROFILE\.ssh\tarq_deploy" ubuntu@100.76.60.83
 Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live in [docs/SERVER_INFRASTRUCTURE.md](docs/SERVER_INFRASTRUCTURE.md).
 
 ### Currently Running (Keep Running)
-1. **Zero-Token Batch Worker (`tmux` session `clip-worker`)** — Runs `scripts/auto_batch_worker.py` continuously on `ubuntu@100.76.60.83`, clipping 15m slices from `manifests/auto_sources.json` via `scripts/viral_pipeline.py` (`gemini-3-flash-preview` + Faster-Whisper + FFmpeg) and writing `.ready_for_qa` markers.
-2. **Scheduled Codex QA Cron (`scripts/codex_qa_cron.sh`, `0 */2 * * *`)** — Checks every 2 hours for `.ready_for_qa` batches (0 tokens used when idle), then invokes a single `codex exec` (`gpt-6.2-sol`, `medium`) pass to visually inspect `qa/*.png`, verify `ffprobe`, fix any crop/hook issues, release to GitHub, rebuild `docs/index.html`, and push.
-3. **Postiz (`~/postiz`)** — Social scheduling UI + Temporal + Postgres + Redis + Elasticsearch.
-   - Local port: `127.0.0.1:4008` (`postiz`), `127.0.0.1:8080` (`temporal-ui`), `127.0.0.1:7233` (`temporal`)
-   - Tailscale HTTPS URL: `https://instance-20260916-2320.tail256180.ts.net:4007`
-   - SuperAdmin login email: `sidemail619@gmail.com` (cookie fix in `~/postiz/subdomain.management.js`)
-3. **GitHub Pages Mobile Upload Hub (Public Static UI)**
+1. **Continuous Batch Worker (`tmux` session `clip-worker`)** — Runs `scripts/auto_batch_worker.py` continuously on `ubuntu@100.76.60.83` (auto-restarted `@reboot`), using an 8-thread `720p60` parallel HLS slice downloader (`_download_slice_fast_hls`, skips `>= 85%` muted slices and advances after `2` retries), `faster-whisper (base)`, `codex:gpt-6.2-sol (medium)` isolated `--ephemeral` selection, `--no-trim-silence`, and `DAILY_CLIP_TARGET = 45` surviving (non-rejected) clips/day.
+2. **Scheduled Codex QA & SocialClaw Cron (`scripts/codex_qa_cron.sh`, `0 */2 * * *`)** — Exits at `0` cost if no `.ready_for_qa` batches wait; otherwise runs one `codex exec -m gpt-6.2-sol` (`medium`) pass to inspect `qa/*.png` stills + `ffprobe`, release passing clips to GitHub, update Mobile Upload Hub (`docs/index.html`), schedule onto SocialClaw via `scripts/socialclaw_publish.py`, mark `.published` / `.qa_rejected`, and clean `.work/`.
+3. **Postiz (`~/postiz`)** — Self-hosted social scheduler (`127.0.0.1:4008`, Tailscale `:4007`, `sidemail619@gmail.com`).
+4. **GitHub Pages Mobile Upload Hub (Public Static UI)**
    - Live URL: `https://usmansharjeel619.github.io/video-engine/`
    - Built from `manifests/hub_config.json` -> `python scripts/build_mobile_pack.py` -> `docs/index.html`
-4. **Pre-existing Dev Python Listeners (Leave Untouched)**
+5. **Pre-existing Dev Python Listeners (Leave Untouched)**
    - `127.0.0.1:8137` (`/tmp/run_backend_devb.py`), `127.0.0.1:8134` (`/tmp/devd-api-8134.py`), `127.0.0.1:8002` (`/home/ubuntu/devf_serve.py`)
 
 ### Intentionally Stopped (Do NOT Start)
@@ -85,6 +82,9 @@ Detailed port maps, Tailscale Serve proxy routes, and maintenance commands live 
 | `scripts/caption_styles.py` | 6 kinetic ASS animated caption presets (`hormozi`, `pop`, `pill`, `lime`, `oneword`, `clean`) with active-word pop & highlight boxes |
 | `scripts/clip_engine.py` | FFmpeg v2 portrait renderer (`split` facecam+gameplay, `auto` OpenCV cam box, `--trim-silence`, `--flash-hook`, `--sfx`, hook PNG overlay, `fontsdir`, `setsar=1`, `-14 LUFS`) |
 | `scripts/grab_yt_dvr.py` | Downloads bounded `[start-min, end-min]` DASH `299+140` slices from YouTube live/VOD with auto cookies (`0.000000` A/V start_time) |
+| `scripts/auto_batch_worker.py` | 24/7 Twitch slice worker (`720p60` 8-thread parallel HLS downloader, `45/day` surviving non-rejected clip cap, `manifests/auto_sources.json` queue) |
+| `scripts/socialclaw_publish.py` | SocialClaw auto-scheduler (`TikTok` & `Instagram` `45/day`, `YouTube` `9/rolling-24h`, `30m` spacing, presigned asset upload, `/v1/posts/validate` + `/v1/posts/apply`) |
+| `scripts/codex_qa_cron.sh` | 2-hourly automated Codex QA + GitHub release + Mobile Hub + SocialClaw scheduling pass |
 | `scripts/build_mobile_pack.py` | Generates `docs/index.html` Mobile Hub (Folders -> Batches -> `To Post` / `Posted` / `All` tabs + virality badge + `localStorage` tracking) |
 | `scripts/publish_clips.py` | Publishes QA-passed manifest batches to Postiz (`POSTIZ_INTEGRATION_IDS` or auto-discovered `/integrations`) or Upload-Post |
 | `fonts/`, `sfx/` | Bundled SIL OFL fonts (`Montserrat ExtraBold`, `Anton`, `Archivo Black`, `Noto Serif`) and WAV SFX (`whoosh.wav`, `boom.wav`, `ding.wav`) |

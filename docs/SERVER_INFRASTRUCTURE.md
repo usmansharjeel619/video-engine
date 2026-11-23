@@ -45,8 +45,12 @@ This document records the live topology, hardware constraints, secret locations 
 
 - **Python Venv (`~/video-engine/.venv`):** `faster-whisper`, `yt-dlp`, `opencv-python-headless`, `numpy`, `google-genai`, `pillow`, `pydantic`, `python-dotenv` + system `ffmpeg` + `fonts-noto-color-emoji`.
 - **Untracked Secrets (`chmod 600`):**
-  - `~/video-engine/.env`: `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3-flash-preview` (plus optional `POSTIZ_API_KEY`, `POSTIZ_BASE_URL=http://127.0.0.1:4008`, `POSTIZ_INTEGRATION_IDS`)
+  - `~/video-engine/.env`: `VIRAL_SELECTOR_BACKEND=codex`, `CODEX_SELECTOR_REASONING=medium`, `SOCIALCLAW_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.6-flash` (plus optional `POSTIZ_API_KEY`, `POSTIZ_BASE_URL=http://127.0.0.1:4008`, `POSTIZ_INTEGRATION_IDS`)
   - `~/video-engine/.creds/youtube_cookies.txt`: Netscape cookies auto-detected by `viral_pipeline.py`, `clip_engine.py`, and `grab_yt_dvr.py`
+- **Auto-Worker + SocialClaw Monitoring Quick Commands:**
+  - Check live pipeline & disk: `tmux attach -t clip-worker` (or `tail -n 40 output/auto_worker.log`), `tail -n 40 output/codex_qa.log`, `df -h /`
+  - Check SocialClaw queue/published counts: `~/.local/bin/...` or `PATH=/home/ubuntu/opt/node22/bin:$PATH socialclaw posts list --limit 50 --json`
+  - Clean published/rejected MP4s safely: remove `*.mp4`, `.work/`, `qa/` only inside batch dirs WITHOUT `.ready_for_qa`, and copytruncate `output/auto_worker.log` if large.
 - **Example End-to-End Run (on Cloud Server):**
   ```bash
   cd ~/video-engine
