@@ -38,7 +38,7 @@ STATE_FILE = BATCH_ROOT / "worker_state.json"
 SLICE_SECONDS = 900  # 15-minute continuous slices keep disk & whisper fast
 MIN_FREE_GB = 15.0
 MAX_PENDING_QA_BATCHES = 18
-DAILY_CLIP_TARGET = 36
+DAILY_CLIP_TARGET = 45
 MAX_SLICE_RETRIES = 2
 
 
@@ -292,7 +292,36 @@ def _utc_day_key() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-def _daily_clip_count(state: dict[str, Any], day_key: str | None = None) -> int:
+def _surviving_clips_today(batch_root: Path, day_key: str | None = None) -> int:
+    """Count non-rejected clips (.published or .ready_for_qa) from today's UTC date."""
+    key = day_key or _utc_day_key()
+    if not batch_root.exists():
+        return 0
+    total = 0
+    for d in batch_root.iterdir():
+        if not d.is_dir() or (d / ".qa_rejected").exists():
+            continue
+        marker = d / ".published" if (d / ".published").exists() else (d / ".ready_for_qa" if (d / ".ready_for_qa").exists() else None)
+        if marker is None:
+            continue
+        mtime_day = datetime.fromtimestamp(marker.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+        if mtime_day != key:
+            continue
+        mf = d / "manifest.json"
+        if mf.exists():
+            try:
+                items = json.loads(mf.read_text(encoding="utf-8"))
+                total += len(items) if isinstance(items, list) else 1
+                continue
+            except Exception:
+                pass
+        total += 1
+    return total
+
+
+def _daily_clip_count(state: dict[str, Any], day_key: str | None = None, batch_root: Path | None = None) -> int:
+    if batch_root is not None and batch_root.exists():
+        return _surviving_clips_today(batch_root, day_key=day_key)
     key = day_key or _utc_day_key()
     return int((state.get("daily_clips") or {}).get(key, 0))
 
@@ -415,9 +444,9 @@ def process_one_iteration() -> bool:
 
     sources = json.loads(SOURCES_FILE.read_text(encoding="utf-8"))
     state = _load_state()
-    today_clips = _daily_clip_count(state)
+    today_clips = _daily_clip_count(state, batch_root=BATCH_ROOT)
     if today_clips >= DAILY_CLIP_TARGET:
-        print(f"[worker] Daily clip target reached ({today_clips}/{DAILY_CLIP_TARGET} clips today); pausing.")
+        print(f"[worker] Daily surviving clip target reached ({today_clips}/{DAILY_CLIP_TARGET} clips today); pausing.")
         return False
     done_set = set(state.get("processed_slices", []))
 

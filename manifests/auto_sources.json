@@ -40,7 +40,7 @@
     "top_n": 6,
     "min_virality": 70,
     "min_hook_score": 74,
-    "instructions": "ONLY pick explosive, hilarious, or chaotic GTA 6 / reaction moments where seconds 0.0-2.0 immediately hook a cold viewer. Drop weak setups.",
+    "instructions": "ONLY pick explosive, hilarious, or chaotic GTA 6 gameplay moments where seconds 0.0-2.0 immediately hook a cold viewer. NEVER pick Just Chatting fullscreen webcam, PS5 menus, Elgato NO SIGNAL, or idle lobby screens.",
     "extra_tags": ["YourRAGE", "GTA6", "GTAVI", "Gaming"]
   },
   {
@@ -62,7 +62,7 @@
     "top_n": 6,
     "min_virality": 70,
     "min_hook_score": 74,
-    "instructions": "ONLY pick explosive, hilarious, or jaw-dropping GTA 6 / gaming moments where seconds 0.0-2.0 immediately stop a scroller. Drop slow setups or filler.",
+    "instructions": "ONLY pick explosive, hilarious, or jaw-dropping GTA 6 gameplay moments where seconds 0.0-2.0 immediately stop a scroller. NEVER pick Just Chatting fullscreen webcam, lobby screens, or weak filler.",
     "extra_tags": ["GTA6", "GTAVI", "Swagg", "Gaming"]
   }
 ]
