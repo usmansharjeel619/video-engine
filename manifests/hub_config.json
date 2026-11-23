@@ -1,5 +1,34 @@
 [
   {
+    "folder": "StableRonaldo — GTA 6 Playthrough",
+    "subtitle": "Twitch StableRonaldo · High-Hook GTA 6 Moments",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "StableRonaldo #130 (00:30:00–00:45:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-130",
+        "manifest": "manifests/stableronaldo-gta6-auto-130.json"
+      },
+      {
+        "batch": "StableRonaldo #120 (00:15:00–00:30:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-120",
+        "manifest": "manifests/stableronaldo-gta6-auto-120.json"
+      }
+    ]
+  },
+  {
+    "folder": "FaZe Adapt — GTA 6",
+    "subtitle": "Twitch Adapt · High-Hook GTA 6 Clips",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "Adapt #122 (00:00:00–00:15:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/adapt-gta6-auto-122",
+        "manifest": "manifests/adapt-gta6-auto-122.json"
+      }
+    ]
+  },
+  {
     "folder": "YourRAGE — $5,000 GTA 6 Pool",
     "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
