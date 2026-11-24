@@ -5,6 +5,11 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Lacy GTA 6 #156 (02:30:00–02:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-156",
+        "manifest": "manifests/lacy-gta6-auto-156.json"
+      },
+      {
         "batch": "Lacy GTA 6 #143 (01:30:00–01:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-143",
         "manifest": "manifests/lacy-gta6-auto-143.json"
@@ -77,6 +82,11 @@
     "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "YourRAGE #155 (03:30:00–03:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-155",
+        "manifest": "manifests/yourrage-gta6-auto-155.json"
+      },
       {
         "batch": "YourRAGE #150 (03:00:00–03:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-150",
