@@ -216,6 +216,8 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertEqual(_normalize_service("instagramBusiness"), "instagram")
         self.assertEqual(_normalize_service("youtube"), "youtube")
         buf_yt = build_buffer_create_input("youtube", "ch_1", item, "https://example.com/a.mp4", "2026-11-24T12:00:00.000Z")
+        self.assertFalse(buf_yt["needsApproval"])
+        self.assertEqual(buf_yt["metadata"]["youtube"]["type"], "short")
         self.assertIn("#Shorts", buf_yt["metadata"]["youtube"]["title"])
         self.assertEqual(buf_yt["assets"][0]["video"]["url"], "https://example.com/a.mp4")
 

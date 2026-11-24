@@ -137,7 +137,7 @@ def build_buffer_create_input(
         metadata = {"tiktok": {"isAiGenerated": False}}
     elif provider == "instagram":
         text = str(item.get("instagramCaption") or base_caption).strip()[:2200]
-        metadata = {"instagram": {"type": "reel", "shouldShareToFeed": True}}
+        metadata = {"instagram": {"type": "reel", "shouldShareToFeed": True, "isAiGenerated": False}}
     elif provider == "youtube":
         raw_title = str(item.get("youtubeTitle") or item.get("title") or "GTA 6 Highlight")
         yt_title = _ensure_shorts_suffix(raw_title, max_len=100)
@@ -145,6 +145,7 @@ def build_buffer_create_input(
         metadata = {
             "youtube": {
                 "title": yt_title,
+                "type": "short",
                 "categoryId": "20",
                 "privacy": "public",
                 "madeForKids": False,
@@ -162,6 +163,7 @@ def build_buffer_create_input(
         "text": text,
         "schedulingType": "automatic",
         "mode": "customScheduled",
+        "needsApproval": False,
         "dueAt": due_at_iso,
         "assets": [
             {
@@ -196,11 +198,29 @@ def _create_buffer_post(session: requests.Session, api_key: str, post_input: dic
     return res.get("post") or res
 
 
+def _load_socialclaw_clip_providers() -> set[tuple[str, str]]:
+    """Return {(clip_filename, provider)} already scheduled in SocialClaw to avoid double-posting."""
+    sc_state = REPO_ROOT / "output" / "socialclaw_state.json"
+    if not sc_state.exists():
+        return set()
+    try:
+        scheduled = json.loads(sc_state.read_text(encoding="utf-8")).get("scheduled", {})
+        out: set[tuple[str, str]] = set()
+        for key in scheduled:
+            parts = str(key).split(":")
+            if len(parts) >= 3:
+                out.add((parts[1], parts[2]))
+        return out
+    except Exception:
+        return set()
+
+
 def publish_to_buffer(
     manifest_items: list[tuple[str, dict[str, Any], str]],
     max_queue_per_channel: int = DEFAULT_MAX_QUEUE,
     daily_cap: int = DEFAULT_DAILY_CAP,
     spacing_minutes: int = DEFAULT_SPACING_MINUTES,
+    skip_socialclaw_dupes: bool = True,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Schedule clip entries [(batch_key, item, public_mp4_url)] across connected Buffer channels."""
@@ -211,6 +231,7 @@ def publish_to_buffer(
         ch["provider"]: ch for ch in channels if ch.get("provider") in ("tiktok", "instagram", "youtube")
     }
     state = _load_state()
+    sc_dupes = _load_socialclaw_clip_providers() if skip_socialclaw_dupes else set()
     now_utc = datetime.now(timezone.utc)
 
     # Track active future scheduled timestamps per provider from state
@@ -237,7 +258,7 @@ def publish_to_buffer(
 
         for prov, ch in by_provider.items():
             dedup_key = f"{batch_key}:{clip_name}:{prov}"
-            if dedup_key in state.get("scheduled", {}):
+            if dedup_key in state.get("scheduled", {}) or (clip_name, prov) in sc_dupes:
                 continue
             queued_now = future_by_prov.setdefault(prov, [])
             if max_queue_per_channel > 0 and len(queued_now) >= max_queue_per_channel:
