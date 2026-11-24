@@ -31,6 +31,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 STATE_FILE = REPO_ROOT / "output" / "buffer_state.json"
 BUFFER_API_URL = "https://api.buffer.com"
 DEFAULT_MAX_QUEUE = 10  # Buffer Free plan caps concurrent queued posts at 10 per channel
+BUFFER_PROVIDER_DAILY_CAPS = {
+    "youtube": 2,   # Buffer enforces max 2 YouTube posts per day
+    "tiktok": 10,
+    "instagram": 35,
+}
+
+
+def buffer_daily_cap(provider: str, fallback_cap: int = DEFAULT_DAILY_CAP) -> int:
+    cap = BUFFER_PROVIDER_DAILY_CAPS.get(provider, provider_daily_cap(provider, fallback_cap))
+    return min(fallback_cap, cap) if fallback_cap > 0 else cap
 
 
 def _load_env() -> None:
@@ -230,8 +240,6 @@ def _fetch_live_scheduled_by_provider(
     channels: list[dict[str, Any]],
 ) -> dict[str, list[datetime]]:
     """Query Buffer live scheduled queue per channel so slot counts stay accurate."""
-    ch_to_prov = {ch["id"]: ch.get("provider") for ch in channels if ch.get("id") and ch.get("provider")}
-    org_ids = sorted({str(ch["organizationId"]) for ch in channels if ch.get("organizationId")})
     out: dict[str, list[datetime]] = {}
     q = """
     query GetScheduledPosts($input: PostsInput!) {
@@ -240,21 +248,25 @@ def _fetch_live_scheduled_by_provider(
       }
     }
     """
-    for org_id in org_ids:
+    for ch in channels:
+        ch_id = ch.get("id")
+        org_id = ch.get("organizationId")
+        prov = ch.get("provider")
+        if not ch_id or not org_id or not prov:
+            continue
         try:
             data = _gql(
                 session,
                 api_key,
                 q,
-                {"input": {"organizationId": org_id, "filter": {"status": ["scheduled"]}}},
+                {"input": {"organizationId": str(org_id), "filter": {"status": ["scheduled"], "channelIds": [str(ch_id)]}}},
             )
         except Exception:
             continue
         for edge in data.get("posts", {}).get("edges", []):
             node = edge.get("node") or {}
-            prov = ch_to_prov.get(node.get("channelId"))
             raw_due = str(node.get("dueAt") or "")
-            if not prov or not raw_due:
+            if not raw_due:
                 continue
             try:
                 dt = datetime.fromisoformat(raw_due.replace("Z", "+00:00")).astimezone(timezone.utc)
@@ -304,6 +316,7 @@ def publish_to_buffer(
         if dt > now_utc and not live_scheduled.get(prov):
             future_by_prov.setdefault(prov, []).append(dt)
 
+    full_providers: set[str] = set()
     out: dict[str, Any] = {"ok": True, "channels": list(by_provider.keys()), "scheduled_count": 0, "posts": []}
     for batch_key, item, mp4_url in manifest_items:
         clip_name = str(item.get("clip") or "").strip()
@@ -311,11 +324,14 @@ def publish_to_buffer(
             continue
 
         for prov, ch in by_provider.items():
+            if prov in full_providers:
+                continue
             dedup_key = f"{batch_key}:{clip_name}:{prov}"
             if dedup_key in state.get("scheduled", {}) or (clip_name, prov) in sc_dupes:
                 continue
             queued_now = future_by_prov.setdefault(prov, [])
             if max_queue_per_channel > 0 and len(queued_now) >= max_queue_per_channel:
+                full_providers.add(prov)
                 continue
 
             prov_times = all_times_by_prov.setdefault(prov, [])
@@ -323,7 +339,7 @@ def publish_to_buffer(
                 prov_times,
                 now_utc=now_utc,
                 spacing_minutes=spacing_minutes,
-                daily_cap=provider_daily_cap(prov, daily_cap),
+                daily_cap=buffer_daily_cap(prov, daily_cap),
             )
             slot_iso = slot_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
             post_input = build_buffer_create_input(prov, ch["id"], item, mp4_url, slot_iso)
@@ -336,8 +352,11 @@ def publish_to_buffer(
             try:
                 created = _create_buffer_post(session, api_key, post_input)
             except Exception as exc:
-                print(f"[Buffer] WARN {prov}/{clip_name}: {exc}")
-                out["posts"].append({"provider": prov, "clip": clip_name, "error": str(exc)})
+                msg = str(exc)
+                print(f"[Buffer] WARN {prov}/{clip_name}: {msg}")
+                out["posts"].append({"provider": prov, "clip": clip_name, "error": msg})
+                if "Scheduled posts limit reached" in msg:
+                    full_providers.add(prov)
                 continue
 
             state.setdefault("scheduled", {})[dedup_key] = {
