@@ -138,8 +138,8 @@ Rules:
   - Reserve 75-100 for moments that unambiguously pass THE 2-SECOND TEST below.
   - Put mid conversations or slow buildup in 40-69.
   - Put filler, housekeeping, dead air, outros, or context-dependent rambling under 30.
-- THE 2-SECOND TEST (Primary Criterion): Would the first 2 seconds of this moment stop a cold viewer scrolling with zero prior context?
-- Prioritize conflict, shock, screams/hype reactions, comedy, outrageous reveals, big numbers, tight twists, or intense gameplay payoffs.
+- THE 2-SECOND TEST (Primary Criterion): Would seconds 0.0-2.0 force a cold TikTok/Reels/Shorts viewer scrolling at 100mph to FREEZE and watch to the end with zero context? Score >= 80 ONLY if seconds 0-2 start right in the heat of chaos, confrontation, shock, disbelief, or a loud reaction — NEVER slow dialogue or passive gameplay.
+- Prioritize genuine emotional spikes (pure rage, uncontrollable laughter, betrayal, instant karma, wild voice-chat confrontation, jaw-drop reveals, huge stakes/numbers).
 - Each window includes `peak_audio_energy` (0.0-1.0) and `avg_audio_energy` (0.0-1.0) from the audio waveform. High `peak_audio_energy` (>= 0.70) strongly indicates loud reactions, laughter, screams, or dramatic gameplay peaks even when speech is sparse — weigh it alongside the transcript.
 {instructions_block}
 TRANSCRIPT_LANGUAGE: {language}
@@ -165,13 +165,14 @@ CLIP RULES:
 - HOW MANY: Return UP TO {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window but only return genuine bangers (never pad with weak filler).
 - DIVERSITY: Never return two clips covering the same joke, point, or beat.
 {instructions_block}{keyword_block}
-HOOK PLAYBOOK — craft `viral_hook_text` (STRICT MAX 7 WORDS + 1-2 fitting emojis, <= 45 chars total, in {language}, so it NEVER wraps onto 3 lines):
-- Make it laser-specific to THIS clip's concrete event, number, character, or reaction — NEVER a generic video summary.
-- Strong proven patterns (adapt in {language}):
-  * Reaction/Shock: "HE ACTUALLY LOST IT OVER THIS 😭🔥"
-  * Reveal/Twist: "Wait until you see what appeared... 💀"
-  * Hot Take / Mistake: "Nobody expected this to happen 🚨"
-  * Question Loop: "Why did he stop mid-chase?! 🤯"
+HOOK PLAYBOOK — craft `viral_hook_text` (STRICT MAX 6 WORDS + 1-2 fitting emojis, <= 42 chars total, in {language}, so it hits instantly on 2 crisp lines):
+- MUST stop a cold viewer in 0.8 seconds AND spark a curiosity gap WITHOUT spoiling the punchline.
+- BANNED generic filler words: NEVER write vague phrases like "over this", "what happened", "he reacts", "crazy moment", "watch till the end", or "you won't believe".
+- ALWAYS name the concrete trigger, stake, quote, mistake, or clash in plain punchy words:
+  * Instant Tension: "HE INSTANTLY REGRETTED SAYING THAT 💀"
+  * Absurd Betrayal / Karma: "COPS RUINED HIS $1M ESCAPE 🚨"
+  * Curiosity Gap: "WHY DID CASEOH GO SILENT?! 😭"
+  * Unfiltered Quote / Contrast: "FROM TALKING TRASH TO PANICKING 💀"
 
 COPY RULES (all text in {language}):
 - `video_description_for_tiktok` & `video_description_for_instagram`: 1-2 punchy curiosity sentences teasing the payoff + 3-5 relevant hashtags{extra_tags_hint}.

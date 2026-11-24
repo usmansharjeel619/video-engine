@@ -38,7 +38,7 @@ fi
 
 AGY_QA_MODEL="${AGY_QA_MODEL:-gemini-4-hydrogen-medium}"
 if [ -n "${BUFFER_API_KEY:-}" ]; then
-  SCHED_CMD="Skip SocialClaw once Buffer is active; after git push I will automatically sync Buffer via buffer_publish.py --refill-from-hub."
+  SCHED_CMD="Do NOT schedule via SocialClaw (Buffer-only mode). Keep in mind Buffer allows max 10 concurrent scheduled posts per channel at a time; once posts are published and slots free up, buffer_publish.py --refill-from-hub automatically schedules more from manifests/hub_config.json after git push."
 else
   SCHED_CMD="schedule passing clips across all connected SocialClaw platforms (TikTok, Instagram, YouTube) via '.venv/bin/python scripts/socialclaw_publish.py --manifest <batch_dir>/manifest.json'"
 fi

@@ -42,7 +42,7 @@ cd ~/video-engine
 ```
 
 - For `stream_boot_11_25m.mp4` / same IShowSpeed overlay layout (`1920x1080` mid-left webcam), `--cam-pos 0.0,0.425,0.205,0.225` is razor-exact; for new streamers/layouts use `--cam-pos auto` (YuNet) and **verify visually in `qa/*.png`**.
-- Keep `--min-virality 70 --min-hook-score 74`. **Quality without unnecessary rejects**: drop genuinely weak/menu clips, not strong `70+` moments.
+- Keep `--min-virality 76 --min-hook-score 80`. Drop weak setups, slow dialogue, or generic hooks so every published clip has genuine viral upside.
 
 ---
 
@@ -71,10 +71,5 @@ Once all clips in the batch pass review:
      --config manifests/hub_config.json --output docs/index.html
    ```
 5. Commit ONLY code/manifests/docs (NEVER `.env`, `.creds/`, `.mp4`, or `.work/`) and `git push origin main`.
-6. Auto-schedule the verified clips across **TikTok, Instagram Reels, and YouTube Shorts** via **SocialClaw** (staggered 30m apart, capped at 45/day per platform):
-   ```bash
-   ~/video-engine/.venv/bin/python scripts/socialclaw_publish.py \
-     --manifest output/auto_batches/<batch_dir>/manifest.json
-   ```
-   Verify `scheduled_count` or inspect `socialclaw posts list --json`. Never commit `SOCIALCLAW_API_KEY`.
+6. Auto-schedule verified clips exclusively via **Buffer** (`scripts/buffer_publish.py --refill-from-hub`), **NEVER SocialClaw**. Keep in mind: Buffer Free allows **at most 10 concurrent scheduled posts per channel at a time** (`tiktok`, `instagram`, `youtube`). Do NOT retry past 10 or touch SocialClaw; remaining released clips stay in `manifests/hub_config.json` and the 30-minute refill cron automatically schedules more as soon as queued Buffer posts go live and open slots. Never commit `BUFFER_API_KEY`.
 7. Remove processed temporary MP4 caches under `output/<batch>/.work/` (and source chunks already completely processed) if `df -h /` free space drops below `25G`.

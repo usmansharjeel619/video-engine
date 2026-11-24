@@ -377,12 +377,14 @@ def publish_to_buffer(
 
 
 def _collect_from_hub_config() -> list[tuple[str, dict[str, Any], str]]:
+    """Collect auto-batch clips round-robin across streamer folders for diverse Buffer queues."""
     cfg_path = REPO_ROOT / "manifests" / "hub_config.json"
     if not cfg_path.exists():
         return []
     folders = json.loads(cfg_path.read_text(encoding="utf-8"))
-    collected: list[tuple[str, dict[str, Any], str]] = []
+    per_folder: list[list[tuple[str, dict[str, Any], str]]] = []
     for folder in folders:
+        bucket: list[tuple[str, dict[str, Any], str]] = []
         for batch in folder.get("batches", []):
             base_url = str(batch.get("baseUrl") or "").rstrip("/")
             mf = REPO_ROOT / str(batch.get("manifest") or "")
@@ -393,7 +395,21 @@ def _collect_from_hub_config() -> list[tuple[str, dict[str, Any], str]]:
             for item in items:
                 clip = str(item.get("clip") or "").strip()
                 if clip:
-                    collected.append((bkey, item, f"{base_url}/{clip}"))
+                    bucket.append((bkey, item, f"{base_url}/{clip}"))
+        if bucket:
+            per_folder.append(bucket)
+
+    collected: list[tuple[str, dict[str, Any], str]] = []
+    idx = 0
+    while True:
+        added = False
+        for bucket in per_folder:
+            if idx < len(bucket):
+                collected.append(bucket[idx])
+                added = True
+        if not added:
+            break
+        idx += 1
     return collected
 
 
