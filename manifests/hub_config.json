@@ -5,6 +5,11 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Lacy GTA 6 #178 (03:45:00–04:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-178",
+        "manifest": "manifests/lacy-gta6-auto-178.json"
+      },
+      {
         "batch": "Lacy GTA 6 #156 (02:30:00–02:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-156",
         "manifest": "manifests/lacy-gta6-auto-156.json"
@@ -38,6 +43,11 @@
     "subtitle": "Twitch StableRonaldo · High-Hook GTA 6 Moments",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "StableRonaldo #184 (02:30:00–02:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-184",
+        "manifest": "manifests/stableronaldo-gta6-auto-184.json"
+      },
       {
         "batch": "StableRonaldo #174 (02:00:00–02:15:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-174",
