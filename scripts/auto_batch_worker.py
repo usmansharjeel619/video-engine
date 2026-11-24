@@ -39,6 +39,7 @@ SLICE_SECONDS = 900  # 15-minute continuous slices keep disk & whisper fast
 MIN_FREE_GB = 15.0
 MAX_PENDING_QA_BATCHES = 18
 DAILY_CLIP_TARGET = 45
+MAX_RAW_CLIPS_PER_DAY = 55
 MAX_SLICE_RETRIES = 2
 
 
@@ -444,6 +445,10 @@ def process_one_iteration() -> bool:
 
     sources = json.loads(SOURCES_FILE.read_text(encoding="utf-8"))
     state = _load_state()
+    raw_today = int((state.get("daily_clips") or {}).get(_utc_day_key(), 0))
+    if raw_today >= MAX_RAW_CLIPS_PER_DAY:
+        print(f"[worker] Daily raw clip cap reached ({raw_today}/{MAX_RAW_CLIPS_PER_DAY} clips rendered today); conserving credits until tomorrow.")
+        return False
     today_clips = _daily_clip_count(state, batch_root=BATCH_ROOT)
     if today_clips >= DAILY_CLIP_TARGET:
         print(f"[worker] Daily surviving clip target reached ({today_clips}/{DAILY_CLIP_TARGET} clips today); pausing.")

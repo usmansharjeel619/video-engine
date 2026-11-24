@@ -42,14 +42,14 @@ cd ~/video-engine
 ```
 
 - For `stream_boot_11_25m.mp4` / same IShowSpeed overlay layout (`1920x1080` mid-left webcam), `--cam-pos 0.0,0.425,0.205,0.225` is razor-exact; for new streamers/layouts use `--cam-pos auto` (YuNet) and **verify visually in `qa/*.png`**.
-- Keep `--min-virality 80 --min-hook-score 85`. **Quality over quantity**: if a 15–20 minute chunk yields 0 clips, move to the next chunk instead of lowering the bar.
+- Keep `--min-virality 70 --min-hook-score 74`. **Quality without unnecessary rejects**: drop genuinely weak/menu clips, not strong `70+` moments.
 
 ---
 
 ## 4. Mandatory Batch Review & Self-Healing Checklist (Every Batch)
 
 After each `viral_pipeline.py` run completes, YOU MUST check **all 4 items** before publishing:
-1. **Check `manifest.json`:** Ensure `qaPassed == true`, `hookScore >= 85`, `viralityScore >= 80`, and `hook` / `title` / `caption` / `pin` match the clip cleanly without truncations or placeholder text.
+1. **Check `manifest.json`:** Ensure `qaPassed == true`, `hookScore >= 74`, `viralityScore >= 70`, and `hook` / `title` / `caption` / `pin` match the clip cleanly without truncations or placeholder text.
 2. **Check `ffprobe`:** Confirm `1080x1920`, `start_time=0.000000` on BOTH video and audio streams, and reasonable duration (`>= 10s`).
 3. **Visually Inspect `output/<batch_dir>/qa/*.png`:** Open the extracted `*_t1_hook.png` and `*_tmid_cap.png` frames. Confirm:
    - Top half shows full streamer webcam face (no cropped forehead, no sub-counter bleed).

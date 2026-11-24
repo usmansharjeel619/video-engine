@@ -27,8 +27,8 @@ DEFAULT_BASE_URL = "https://getsocialclaw.com"
 DEFAULT_DAILY_CAP = 45
 PROVIDER_DAILY_CAPS = {
     "youtube": 9,   # YouTube enforces a hard ~10/24h uploadLimitExceeded cap on standard channels
-    "tiktok": 45,
-    "instagram": 45,
+    "tiktok": 10,   # TikTok Content Posting API triggers spam_risk_too_many_posts past ~11/24h
+    "instagram": 35,
 }
 DEFAULT_SPACING_MINUTES = 30
 DEFAULT_PROVIDERS = ("tiktok", "instagram", "youtube")

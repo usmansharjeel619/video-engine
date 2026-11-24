@@ -31,7 +31,7 @@ GEMINI_FALLBACK_MODELS = (
 )
 DEFAULT_SELECTOR_BACKEND = "codex"
 DEFAULT_CODEX_MODEL = "gpt-6.2-sol"
-DEFAULT_CODEX_REASONING = "medium"
+DEFAULT_CODEX_REASONING = "low"
 
 
 def _selector_backend() -> str:

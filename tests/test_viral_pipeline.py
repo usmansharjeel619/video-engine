@@ -176,7 +176,8 @@ class ViralPipelineUnitTests(unittest.TestCase):
         capped_slot = compute_next_slot(existing, now_utc=now, spacing_minutes=30, daily_cap=2)
         self.assertGreaterEqual(capped_slot, datetime(2026, 11, 21, 14, 20, tzinfo=timezone.utc))
         self.assertEqual(provider_daily_cap("youtube"), 9)
-        self.assertEqual(provider_daily_cap("tiktok"), 45)
+        self.assertEqual(provider_daily_cap("tiktok"), 10)
+        self.assertEqual(provider_daily_cap("instagram"), 35)
 
         item = {
             "title": "Lacy Loses It in GTA 6!",
