@@ -198,21 +198,70 @@ def _create_buffer_post(session: requests.Session, api_key: str, post_input: dic
     return res.get("post") or res
 
 
-def _load_socialclaw_clip_providers() -> set[tuple[str, str]]:
-    """Return {(clip_filename, provider)} already scheduled in SocialClaw to avoid double-posting."""
+def _load_socialclaw_context() -> tuple[set[tuple[str, str]], dict[str, list[datetime]]]:
+    """Return SocialClaw scheduled {(clip, provider)} pairs and recent/future publish timestamps."""
     sc_state = REPO_ROOT / "output" / "socialclaw_state.json"
     if not sc_state.exists():
-        return set()
+        return set(), {}
     try:
         scheduled = json.loads(sc_state.read_text(encoding="utf-8")).get("scheduled", {})
-        out: set[tuple[str, str]] = set()
-        for key in scheduled:
+        dupes: set[tuple[str, str]] = set()
+        times_by_prov: dict[str, list[datetime]] = {}
+        for key, rec in scheduled.items():
             parts = str(key).split(":")
             if len(parts) >= 3:
-                out.add((parts[1], parts[2]))
-        return out
+                prov = parts[2]
+                dupes.add((parts[1], prov))
+                raw_pub = str((rec or {}).get("publishAt") or "")
+                if raw_pub:
+                    try:
+                        dt = datetime.fromisoformat(raw_pub.replace("Z", "+00:00")).astimezone(timezone.utc)
+                        times_by_prov.setdefault(prov, []).append(dt)
+                    except ValueError:
+                        pass
+        return dupes, times_by_prov
     except Exception:
-        return set()
+        return set(), {}
+
+
+def _fetch_live_scheduled_by_provider(
+    session: requests.Session,
+    api_key: str,
+    channels: list[dict[str, Any]],
+) -> dict[str, list[datetime]]:
+    """Query Buffer live scheduled queue per channel so slot counts stay accurate."""
+    ch_to_prov = {ch["id"]: ch.get("provider") for ch in channels if ch.get("id") and ch.get("provider")}
+    org_ids = sorted({str(ch["organizationId"]) for ch in channels if ch.get("organizationId")})
+    out: dict[str, list[datetime]] = {}
+    q = """
+    query GetScheduledPosts($input: PostsInput!) {
+      posts(input: $input) {
+        edges { node { id channelId dueAt status } }
+      }
+    }
+    """
+    for org_id in org_ids:
+        try:
+            data = _gql(
+                session,
+                api_key,
+                q,
+                {"input": {"organizationId": org_id, "filter": {"status": ["scheduled"]}}},
+            )
+        except Exception:
+            continue
+        for edge in data.get("posts", {}).get("edges", []):
+            node = edge.get("node") or {}
+            prov = ch_to_prov.get(node.get("channelId"))
+            raw_due = str(node.get("dueAt") or "")
+            if not prov or not raw_due:
+                continue
+            try:
+                dt = datetime.fromisoformat(raw_due.replace("Z", "+00:00")).astimezone(timezone.utc)
+                out.setdefault(prov, []).append(dt)
+            except ValueError:
+                continue
+    return out
 
 
 def publish_to_buffer(
@@ -231,12 +280,16 @@ def publish_to_buffer(
         ch["provider"]: ch for ch in channels if ch.get("provider") in ("tiktok", "instagram", "youtube")
     }
     state = _load_state()
-    sc_dupes = _load_socialclaw_clip_providers() if skip_socialclaw_dupes else set()
+    sc_dupes, sc_times_by_prov = _load_socialclaw_context() if skip_socialclaw_dupes else (set(), {})
+    live_scheduled = _fetch_live_scheduled_by_provider(session, api_key, channels)
     now_utc = datetime.now(timezone.utc)
 
-    # Track active future scheduled timestamps per provider from state
-    future_by_prov: dict[str, list[datetime]] = {}
-    all_times_by_prov: dict[str, list[datetime]] = {}
+    # Track active future scheduled timestamps per provider from Buffer live queue + local state
+    future_by_prov: dict[str, list[datetime]] = {p: list(dts) for p, dts in live_scheduled.items()}
+    all_times_by_prov: dict[str, list[datetime]] = {
+        p: list(sc_times_by_prov.get(p, [])) + list(live_scheduled.get(p, []))
+        for p in set(sc_times_by_prov) | set(live_scheduled)
+    }
     for _, rec in state.get("scheduled", {}).items():
         prov = rec.get("provider")
         raw_due = rec.get("dueAt", "")
@@ -246,8 +299,9 @@ def publish_to_buffer(
             dt = datetime.fromisoformat(raw_due.replace("Z", "+00:00")).astimezone(timezone.utc)
         except ValueError:
             continue
-        all_times_by_prov.setdefault(prov, []).append(dt)
-        if dt > now_utc:
+        if dt not in all_times_by_prov.get(prov, []):
+            all_times_by_prov.setdefault(prov, []).append(dt)
+        if dt > now_utc and not live_scheduled.get(prov):
             future_by_prov.setdefault(prov, []).append(dt)
 
     out: dict[str, Any] = {"ok": True, "channels": list(by_provider.keys()), "scheduled_count": 0, "posts": []}
@@ -313,7 +367,7 @@ def _collect_from_hub_config() -> list[tuple[str, dict[str, Any], str]]:
         for batch in folder.get("batches", []):
             base_url = str(batch.get("baseUrl") or "").rstrip("/")
             mf = REPO_ROOT / str(batch.get("manifest") or "")
-            if not base_url or not mf.exists():
+            if not base_url or not mf.exists() or ("-auto-" not in mf.stem and "_auto_" not in mf.stem):
                 continue
             bkey = mf.stem
             items = json.loads(mf.read_text(encoding="utf-8"))
