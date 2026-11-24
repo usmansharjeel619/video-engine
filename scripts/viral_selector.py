@@ -31,8 +31,6 @@ GEMINI_FALLBACK_MODELS = (
 )
 DEFAULT_SELECTOR_BACKEND = "agy"
 DEFAULT_AGY_MODEL = "gemini-4-hydrogen-medium"
-DEFAULT_CODEX_MODEL = "gpt-6.2-sol"
-DEFAULT_CODEX_REASONING = "low"
 
 
 def _selector_backend() -> str:
@@ -40,14 +38,9 @@ def _selector_backend() -> str:
 
 
 def _selector_label(gemini_model: str) -> str:
-    backend = _selector_backend()
-    if backend == "agy":
+    if _selector_backend() == "agy":
         agy_model = (os.environ.get("AGY_SELECTOR_MODEL") or DEFAULT_AGY_MODEL).strip()
         return f"agy:{agy_model}"
-    if backend == "codex":
-        codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
-        codex_reasoning = (os.environ.get("CODEX_SELECTOR_REASONING") or DEFAULT_CODEX_REASONING).strip()
-        return f"codex:{codex_model} ({codex_reasoning})"
     return gemini_model
 
 
@@ -579,67 +572,6 @@ def _strict_json_schema(schema_cls: type[BaseModel]) -> dict[str, Any]:
     return schema
 
 
-def _call_codex_structured(
-    prompt: str,
-    schema_cls: type[BaseModel],
-    stage: str,
-    image_paths: list[Path] | None = None,
-    timeout_secs: int = 240,
-) -> dict[str, Any]:
-    """Run headless Codex CLI (`codex exec -m gpt-6.2-sol` medium) for structured JSON selection."""
-    codex_bin = shutil.which("codex") or "/home/ubuntu/opt/node22/bin/codex"
-    if not Path(codex_bin).exists() and not shutil.which(codex_bin):
-        raise RuntimeError("codex CLI not found.")
-
-    codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
-    codex_reasoning = (os.environ.get("CODEX_SELECTOR_REASONING") or DEFAULT_CODEX_REASONING).strip()
-    schema = _strict_json_schema(schema_cls)
-    with tempfile.TemporaryDirectory(prefix="codex_sel_") as tmpdir:
-        tmp_path = Path(tmpdir)
-        schema_file = tmp_path / "schema.json"
-        out_file = tmp_path / "out.json"
-        schema_file.write_text(json.dumps(schema), encoding="utf-8")
-
-        cmd = [
-            codex_bin,
-            "exec",
-            "-m",
-            codex_model,
-            "-c",
-            f'model_reasoning_effort="{codex_reasoning}"',
-            "-c",
-            "mcp_servers.socialclaw.enabled=false",
-            "-s",
-            "read-only",
-            "--ephemeral",
-            "--skip-git-repo-check",
-            "--output-schema",
-            str(schema_file),
-            "-o",
-            str(out_file),
-        ]
-        for img in image_paths or []:
-            if img.exists():
-                cmd.extend(["-i", str(img)])
-        cmd.append("-")
-
-        print(f"  [Codex:{stage}] invoking {codex_model} ({codex_reasoning}, timeout={timeout_secs}s)...")
-        proc = subprocess.run(
-            cmd,
-            cwd=str(tmp_path),
-            input=prompt,
-            capture_output=True,
-            text=True,
-            timeout=timeout_secs,
-            check=False,
-        )
-        if proc.returncode != 0 or not out_file.exists():
-            err = (proc.stderr or proc.stdout or "")[-300:].strip()
-            raise RuntimeError(f"codex exec failed ({proc.returncode}): {err}")
-        raw = out_file.read_text(encoding="utf-8").strip()
-        return _parse_json_response_text(raw)
-
-
 def _call_agy_structured(
     prompt: str,
     schema_cls: type[BaseModel],
@@ -717,12 +649,10 @@ def _generate_structured_with_fallback(
     stage: str,
     image_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
-    """Dispatch structured selection to Antigravity CLI (default), Codex CLI, or Gemini."""
+    """Dispatch structured selection to Antigravity CLI (default) or Gemini when configured."""
     backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
     if backend == "agy":
         return _call_agy_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
-    if backend == "codex":
-        return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
 
     from google.genai import types as genai_types
 
@@ -746,12 +676,7 @@ def _generate_structured_with_fallback(
                 print(f"  [Gemini:{stage}] {candidate_model} failed ({str(exc)[:140]}); trying next...")
 
     if backend != "gemini":
-        try:
-            return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
-        except Exception as codex_exc:
-            if last_err is not None:
-                raise RuntimeError(f"Gemini & Codex both failed: gemini={last_err} | codex={codex_exc}") from codex_exc
-            raise
+        return _call_agy_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
 
     assert last_err is not None
     raise last_err
