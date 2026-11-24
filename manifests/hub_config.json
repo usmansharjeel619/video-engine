@@ -5,6 +5,16 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Lacy GTA 6 #213 (06:00:00–06:15:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-213",
+        "manifest": "manifests/lacy-gta6-auto-213.json"
+      },
+      {
+        "batch": "Lacy GTA 6 #211 (05:45:00–06:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-211",
+        "manifest": "manifests/lacy-gta6-auto-211.json"
+      },
+      {
         "batch": "Lacy GTA 6 #205 (05:15:00–05:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-205",
         "manifest": "manifests/lacy-gta6-auto-205.json"
@@ -63,6 +73,16 @@
     "subtitle": "Twitch StableRonaldo · High-Hook GTA 6 Moments",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "StableRonaldo #216 (04:45:00–05:00:00, 6 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-216",
+        "manifest": "manifests/stableronaldo-gta6-auto-216.json"
+      },
+      {
+        "batch": "StableRonaldo #214 (04:30:00–04:45:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-214",
+        "manifest": "manifests/stableronaldo-gta6-auto-214.json"
+      },
       {
         "batch": "StableRonaldo #206 (03:45:00–04:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-206",
@@ -137,6 +157,11 @@
     "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "YourRAGE #215 (07:15:00–07:30:00, 4 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-215",
+        "manifest": "manifests/yourrage-gta6-auto-215.json"
+      },
       {
         "batch": "YourRAGE #210 (07:00:00–07:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-210",
