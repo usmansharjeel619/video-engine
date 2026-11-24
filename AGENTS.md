@@ -10,7 +10,7 @@
 ### DO
 - **Run heavy work on the cloud server (`ubuntu@100.76.60.83`)**: Use the Oracle Cloud ARM64 (`aarch64`, Ubuntu 24.04) server for `yt-dlp` downloads, `faster-whisper`, FFmpeg renders, Docker containers, and OpenShorts jobs.
 - **Read `.agents/skills/viral-stream-clipper/SKILL.md`** before creating custom FFmpeg clips or Content Rewards batches.
-- **Primary Selector Backend (`Codex`):** Viral moment selection defaults to **`codex exec -m gpt-6.2-sol` (`medium` reasoning)** in an isolated `--ephemeral` temp sandbox (`VIRAL_SELECTOR_BACKEND=codex` in server `.env`), with `auto_batch_worker.py` using `--no-trim-silence` and `--no-ground-hooks` to prevent short-duration drops and duplicate vision calls.
+- **Primary AI Backend (`Antigravity CLI`):** Viral moment selection (`viral_selector.py`) and QA (`codex_qa_cron.sh`) default to **`agy --model gemini-4-hydrogen-medium`** (`VIRAL_SELECTOR_BACKEND=agy`, `QA_BACKEND=agy` in server `.env`), keeping `codex` unused unless explicitly switched. `auto_batch_worker.py` uses `--no-trim-silence` and `--no-ground-hooks`.
 - **Auto-Publishing (`SocialClaw`):** Connected accounts (**TikTok** `tiktok:@ishowspeedfan177`, **Instagram** `ishow_speedfan619`, **YouTube** `IShowSpeed Fan`) publish automatically via `scripts/socialclaw_publish.py` (`SOCIALCLAW_API_KEY` in untracked `.env`, **never committed**). Enforces `30m` staggered slots, `45/day` TikTok & Instagram, and **`9/rolling-24h` YouTube** (`uploadLimitExceeded` safe cap).
 - **Verify every rendered clip before delivering**:
   - Run `ffprobe` to confirm `start_time=0.000000` on both video and audio streams (no A/V desync).
@@ -21,7 +21,7 @@
 - **NEVER store VODs or render batches on the Windows laptop (`C:` drive is space-constrained; `D:\Freelance Projects\video-engine` is for code, manifests, docs, and lightweight orchestration only).**
 - **NEVER commit secrets**: `.env`, `.env.selfhost`, `.creds/`, cookies, API keys, or `.mp4`/`.mov`/`.wav` binaries (except `sfx/*.wav`) must stay untracked per `.gitignore`.
 - **NEVER start stopped services on the cloud server** (`hermes-*`, `tarq-*`, `ollama`, host `postgresql`) unless the user explicitly asks — they were stopped to keep RAM free (`11 GiB` RAM + `4.0 GiB` swap).
-- **NEVER use `hydrogen`, `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview`, or `gemini-3.8-flash`** on this Gemini key (verified `404`/`429`/`503`/unavailable).
+- **NEVER use `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview`, or `gemini-3.8-flash`** on the raw Google AI API key (`404`/`429`/`503`). Use `agy` (`gemini-4-hydrogen-medium`) via Antigravity CLI instead.
 - **NEVER use FFmpeg `trim` on long videos without `-copyts -ss` coarse input seeking** (causes 1000-buffer RAM OOM).
 - **NEVER use `.ts.net` as a cookie `Domain` behind Tailscale Serve** — cookies must use the full FQDN `url.hostname` (`instance-20260916-2320.tail256180.ts.net`) or omit `Domain`.
 - **NEVER install CUDA/x86_64 binaries on the cloud server** — it is CPU-only **`aarch64` (`linux/arm64`)**.

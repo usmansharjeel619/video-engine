@@ -128,7 +128,18 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertIn("Huge payoff at 0:14", html_viral)
 
     def test_selector_fallback_and_strict_schema(self) -> None:
-        from viral_selector import DetailResponse, _strict_json_schema, build_gemini_model_candidates
+        from viral_selector import (
+            DEFAULT_AGY_MODEL,
+            DEFAULT_SELECTOR_BACKEND,
+            DetailResponse,
+            _selector_label,
+            _strict_json_schema,
+            build_gemini_model_candidates,
+        )
+
+        self.assertEqual(DEFAULT_SELECTOR_BACKEND, "agy")
+        self.assertEqual(DEFAULT_AGY_MODEL, "gemini-4-hydrogen-medium")
+        self.assertIn("gemini-4-hydrogen-medium", _selector_label("gemini-3.6-flash"))
 
         models = build_gemini_model_candidates("gemini-3.5-flash")
         self.assertEqual(models[0], "gemini-3.5-flash")

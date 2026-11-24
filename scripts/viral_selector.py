@@ -29,7 +29,8 @@ GEMINI_FALLBACK_MODELS = (
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
 )
-DEFAULT_SELECTOR_BACKEND = "codex"
+DEFAULT_SELECTOR_BACKEND = "agy"
+DEFAULT_AGY_MODEL = "gemini-4-hydrogen-medium"
 DEFAULT_CODEX_MODEL = "gpt-6.2-sol"
 DEFAULT_CODEX_REASONING = "low"
 
@@ -39,7 +40,11 @@ def _selector_backend() -> str:
 
 
 def _selector_label(gemini_model: str) -> str:
-    if _selector_backend() == "codex":
+    backend = _selector_backend()
+    if backend == "agy":
+        agy_model = (os.environ.get("AGY_SELECTOR_MODEL") or DEFAULT_AGY_MODEL).strip()
+        return f"agy:{agy_model}"
+    if backend == "codex":
         codex_model = (os.environ.get("CODEX_SELECTOR_MODEL") or DEFAULT_CODEX_MODEL).strip()
         codex_reasoning = (os.environ.get("CODEX_SELECTOR_REASONING") or DEFAULT_CODEX_REASONING).strip()
         return f"codex:{codex_model} ({codex_reasoning})"
@@ -635,6 +640,73 @@ def _call_codex_structured(
         return _parse_json_response_text(raw)
 
 
+def _call_agy_structured(
+    prompt: str,
+    schema_cls: type[BaseModel],
+    stage: str,
+    image_paths: list[Path] | None = None,
+    timeout_secs: int = 240,
+) -> dict[str, Any]:
+    """Run headless Antigravity CLI (`agy -p --model gemini-4-hydrogen-medium`) for structured JSON selection."""
+    agy_bin = shutil.which("agy") or "/home/ubuntu/.local/bin/agy"
+    if not Path(agy_bin).exists() and not shutil.which(agy_bin):
+        raise RuntimeError("agy CLI not found.")
+
+    agy_model = (os.environ.get("AGY_SELECTOR_MODEL") or DEFAULT_AGY_MODEL).strip()
+    schema = _strict_json_schema(schema_cls)
+    with tempfile.TemporaryDirectory(prefix="agy_sel_") as tmpdir:
+        tmp_path = Path(tmpdir)
+        schema_file = tmp_path / "schema.json"
+        schema_file.write_text(json.dumps(schema), encoding="utf-8")
+
+        full_prompt = prompt
+        if image_paths:
+            img_list = ", ".join(str(p) for p in image_paths if p.exists())
+            if img_list:
+                full_prompt = f"Inspect these frame images first via read_file: {img_list}\n\n{prompt}"
+
+        # Guard against OS argv length limits on large transcript prompts
+        if len(full_prompt.encode("utf-8")) > 90_000:
+            (tmp_path / "prompt.txt").write_text(full_prompt, encoding="utf-8")
+            prompt_arg = "Read prompt.txt in the current directory and respond strictly matching the JSON schema."
+        else:
+            prompt_arg = full_prompt
+
+        cmd = [
+            agy_bin,
+            "--disable-slash-commands",
+            "--model",
+            agy_model,
+            "--json-schema",
+            str(schema_file),
+            "--output-format",
+            "json",
+            "--dangerously-skip-permissions",
+            "-p",
+            prompt_arg,
+        ]
+        print(f"  [Agy:{stage}] invoking {agy_model} (timeout={timeout_secs}s)...")
+        proc = subprocess.run(
+            cmd,
+            cwd=str(tmp_path),
+            capture_output=True,
+            text=True,
+            timeout=timeout_secs,
+            check=False,
+        )
+        stdout = (proc.stdout or "").strip()
+        if proc.returncode != 0 or not stdout:
+            err = (proc.stderr or stdout or "")[-300:].strip()
+            raise RuntimeError(f"agy failed ({proc.returncode}): {err}")
+        envelope = _parse_json_response_text(stdout)
+        if envelope.get("status") == "ERROR":
+            raise RuntimeError(f"agy error: {envelope.get('error') or stdout[-300:]}")
+        structured = envelope.get("structured_output")
+        if isinstance(structured, dict):
+            return structured
+        return _parse_json_response_text(str(envelope.get("response") or stdout))
+
+
 def _generate_structured_with_fallback(
     client: Any,
     primary_model: str,
@@ -645,8 +717,10 @@ def _generate_structured_with_fallback(
     stage: str,
     image_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
-    """Dispatch structured selection to Codex CLI (default) or Gemini when explicitly configured."""
+    """Dispatch structured selection to Antigravity CLI (default), Codex CLI, or Gemini."""
     backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
+    if backend == "agy":
+        return _call_agy_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
     if backend == "codex":
         return _call_codex_structured(codex_prompt, schema_cls, stage=stage, image_paths=image_paths)
 
@@ -901,7 +975,7 @@ def ground_hook_with_vision(
     """Pass 3: Inspect 3 frames from the clip via Vision (Codex or Gemini) and ground hook + title to screen action."""
     backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
     genai_types = None
-    if backend != "codex" and client is not None:
+    if backend not in ("codex", "agy") and client is not None:
         from google.genai import types as genai_types
 
     dur = max(1.0, float(abs_end) - float(abs_start))
@@ -999,7 +1073,7 @@ def analyze_and_select_viral_clips(
     resolved_model = get_gemini_model(model_name)
     client: Any = None
     backend = (os.environ.get("VIRAL_SELECTOR_BACKEND") or DEFAULT_SELECTOR_BACKEND).strip().lower()
-    if backend != "codex":
+    if backend not in ("codex", "agy"):
         try:
             from google import genai
             from google.genai import types as genai_types
