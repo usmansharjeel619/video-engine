@@ -1,5 +1,41 @@
 [
   {
+    "folder": "Clix — GTA 6 Highlights",
+    "subtitle": "Twitch Clix · High-Hook GTA 6 Moments",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "Clix #227 (00:00:00–00:04:00, 4 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/clix-gta6-auto-227",
+        "manifest": "manifests/clix-gta6-auto-227.json"
+      }
+    ]
+  },
+  {
+    "folder": "PlaqueBoyMax — GTA 6 Highlights",
+    "subtitle": "Twitch PlaqueBoyMax · High-Hook Clips",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "PlaqueBoyMax #233 (00:30:00–00:45:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-233",
+        "manifest": "manifests/plaqueboymax-gta6-auto-233.json"
+      }
+    ]
+  },
+  {
+    "folder": "Silky — GTA 6 Highlights",
+    "subtitle": "Twitch Silky · High-Hook Clips",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "Silky #238 (00:45:00–01:00:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-238",
+        "manifest": "manifests/silky-gta6-auto-238.json"
+      }
+    ]
+  },
+  {
     "folder": "Lacy — GTA 6 Marathon",
     "subtitle": "Twitch Lacy · Split-Screen Facecam + Gameplay · 2s Hooks",
     "stableIds": true,
@@ -157,6 +193,11 @@
     "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "YourRAGE #223 (07:30:00–07:45:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-223",
+        "manifest": "manifests/yourrage-gta6-auto-223.json"
+      },
       {
         "batch": "YourRAGE #215 (07:15:00–07:30:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-215",
