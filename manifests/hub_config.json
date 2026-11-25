@@ -1,5 +1,22 @@
 [
   {
+    "folder": "CaseOh — Viral Moments",
+    "subtitle": "Twitch CaseOh · Split-Screen Facecam + Gameplay · Ultra Hooks",
+    "stableIds": true,
+    "batches": [
+      {
+        "batch": "CaseOh #258 (01:30:00–01:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-258",
+        "manifest": "manifests/caseoh-viral-auto-258.json"
+      },
+      {
+        "batch": "CaseOh #265 (02:00:00–02:15:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-265",
+        "manifest": "manifests/caseoh-viral-auto-265.json"
+      }
+    ]
+  },
+  {
     "folder": "Clix — GTA 6 Highlights",
     "subtitle": "Twitch Clix · High-Hook GTA 6 Moments",
     "stableIds": true,
@@ -17,6 +34,11 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "PlaqueBoyMax #255 (01:45:00–02:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-255",
+        "manifest": "manifests/plaqueboymax-gta6-auto-255.json"
+      },
+      {
         "batch": "PlaqueBoyMax #233 (00:30:00–00:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-233",
         "manifest": "manifests/plaqueboymax-gta6-auto-233.json"
@@ -28,6 +50,11 @@
     "subtitle": "Twitch Silky · High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "Silky #251 (01:00:00–01:15:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-251",
+        "manifest": "manifests/silky-gta6-auto-251.json"
+      },
       {
         "batch": "Silky #238 (00:45:00–01:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-238",
@@ -193,6 +220,11 @@
     "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "YourRAGE #247 (00:30:00–00:45:00, 1 clip)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-247",
+        "manifest": "manifests/yourrage-gta6-auto-247.json"
+      },
       {
         "batch": "YourRAGE #223 (07:30:00–07:45:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-223",
