@@ -5,6 +5,26 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Agent00 #363 (03:30:00\u201303:45:00, 4 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-363",
+        "manifest": "manifests/agent00-gta6-auto-363.json"
+      },
+      {
+        "batch": "Agent00 #348 (02:30:00\u201302:45:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-348",
+        "manifest": "manifests/agent00-gta6-auto-348.json"
+      },
+      {
+        "batch": "Agent00 #343 (02:00:00\u201302:15:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-343",
+        "manifest": "manifests/agent00-gta6-auto-343.json"
+      },
+      {
+        "batch": "Agent00 #337 (01:30:00\u201301:45:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-337",
+        "manifest": "manifests/agent00-gta6-auto-337.json"
+      },
+      {
         "batch": "Agent00 #330 (01:00:00\u201301:15:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-330",
         "manifest": "manifests/agent00-gta6-auto-330.json"
@@ -21,6 +41,16 @@
     "subtitle": "Twitch CaseOh \u00b7 Split-Screen Facecam + Gameplay \u00b7 Ultra Hooks",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "CaseOh #342 (03:30:00\u201303:45:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-342",
+        "manifest": "manifests/caseoh-viral-auto-342.json"
+      },
+      {
+        "batch": "CaseOh #336 (03:00:00\u201303:15:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-336",
+        "manifest": "manifests/caseoh-viral-auto-336.json"
+      },
       {
         "batch": "CaseOh #319 (02:15:00\u201302:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-319",
@@ -107,6 +137,21 @@
     "subtitle": "Twitch Silky \u00b7 High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "Silky #361 (01:45:00\u201302:00:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-361",
+        "manifest": "manifests/silky-gta6-auto-361.json"
+      },
+      {
+        "batch": "Silky #344 (00:30:00\u201300:45:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-344",
+        "manifest": "manifests/silky-gta6-auto-344.json"
+      },
+      {
+        "batch": "Silky #338 (00:15:00\u201300:30:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-338",
+        "manifest": "manifests/silky-gta6-auto-338.json"
+      },
       {
         "batch": "Silky #331 (05:45:00\u201306:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-331",
