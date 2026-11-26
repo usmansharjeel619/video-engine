@@ -5,6 +5,16 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Agent00 #372 (04:15:00\u201304:30:00, 4 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-372",
+        "manifest": "manifests/agent00-gta6-auto-372.json"
+      },
+      {
+        "batch": "Agent00 #366 (03:45:00\u201304:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-366",
+        "manifest": "manifests/agent00-gta6-auto-366.json"
+      },
+      {
         "batch": "Agent00 #363 (03:30:00\u201303:45:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-363",
         "manifest": "manifests/agent00-gta6-auto-363.json"
@@ -137,6 +147,11 @@
     "subtitle": "Twitch Silky \u00b7 High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "Silky #376 (03:15:00\u201303:30:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-376",
+        "manifest": "manifests/silky-gta6-auto-376.json"
+      },
       {
         "batch": "Silky #361 (01:45:00\u201302:00:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-361",
