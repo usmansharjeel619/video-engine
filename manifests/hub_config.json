@@ -5,6 +5,11 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "Agent00 #330 (01:00:00\u201301:15:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-330",
+        "manifest": "manifests/agent00-gta6-auto-330.json"
+      },
+      {
         "batch": "Agent00 #307 (04:45:00\u201304:52:55, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-307",
         "manifest": "manifests/agent00-gta6-auto-307.json"
@@ -16,6 +21,11 @@
     "subtitle": "Twitch CaseOh \u00b7 Split-Screen Facecam + Gameplay \u00b7 Ultra Hooks",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "CaseOh #319 (02:15:00\u201302:30:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-319",
+        "manifest": "manifests/caseoh-viral-auto-319.json"
+      },
       {
         "batch": "CaseOh #306 (01:15:00\u201301:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-306",
@@ -97,6 +107,16 @@
     "subtitle": "Twitch Silky \u00b7 High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "Silky #331 (05:45:00\u201306:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-331",
+        "manifest": "manifests/silky-gta6-auto-331.json"
+      },
+      {
+        "batch": "Silky #326 (05:30:00\u201305:45:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-326",
+        "manifest": "manifests/silky-gta6-auto-326.json"
+      },
       {
         "batch": "Silky #304 (03:45:00\u201304:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-304",
@@ -287,6 +307,21 @@
     "subtitle": "Twitch yourragegaming \u00b7 High-Hook Clips",
     "stableIds": true,
     "batches": [
+      {
+        "batch": "YourRAGE #332 (04:45:00\u201305:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-332",
+        "manifest": "manifests/yourrage-gta6-auto-332.json"
+      },
+      {
+        "batch": "YourRAGE #327 (04:30:00\u201304:45:00, 4 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-327",
+        "manifest": "manifests/yourrage-gta6-auto-327.json"
+      },
+      {
+        "batch": "YourRAGE #323 (04:15:00\u201304:30:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-323",
+        "manifest": "manifests/yourrage-gta6-auto-323.json"
+      },
       {
         "batch": "YourRAGE #317 (04:00:00\u201304:15:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-317",
