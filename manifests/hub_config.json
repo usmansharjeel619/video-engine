@@ -1,513 +1,553 @@
 [
   {
-    "folder": "Agent00 \u2014 GTA 6 Marathon",
-    "subtitle": "Twitch Agent00 \u00b7 High-Hook GTA 6 Clips",
+    "folder": "Agent00 — GTA 6 Marathon",
+    "subtitle": "Twitch Agent00 · High-Hook GTA 6 Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Agent00 #372 (04:15:00\u201304:30:00, 4 clips)",
+        "batch": "Agent00 #372 (04:15:00–04:30:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-372",
         "manifest": "manifests/agent00-gta6-auto-372.json"
       },
       {
-        "batch": "Agent00 #366 (03:45:00\u201304:00:00, 2 clips)",
+        "batch": "Agent00 #366 (03:45:00–04:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-366",
         "manifest": "manifests/agent00-gta6-auto-366.json"
       },
       {
-        "batch": "Agent00 #363 (03:30:00\u201303:45:00, 4 clips)",
+        "batch": "Agent00 #363 (03:30:00–03:45:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-363",
         "manifest": "manifests/agent00-gta6-auto-363.json"
       },
       {
-        "batch": "Agent00 #348 (02:30:00\u201302:45:00, 2 clips)",
+        "batch": "Agent00 #348 (02:30:00–02:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-348",
         "manifest": "manifests/agent00-gta6-auto-348.json"
       },
       {
-        "batch": "Agent00 #343 (02:00:00\u201302:15:00, 1 clips)",
+        "batch": "Agent00 #343 (02:00:00–02:15:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-343",
         "manifest": "manifests/agent00-gta6-auto-343.json"
       },
       {
-        "batch": "Agent00 #337 (01:30:00\u201301:45:00, 2 clips)",
+        "batch": "Agent00 #337 (01:30:00–01:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-337",
         "manifest": "manifests/agent00-gta6-auto-337.json"
       },
       {
-        "batch": "Agent00 #330 (01:00:00\u201301:15:00, 1 clips)",
+        "batch": "Agent00 #330 (01:00:00–01:15:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-330",
         "manifest": "manifests/agent00-gta6-auto-330.json"
       },
       {
-        "batch": "Agent00 #307 (04:45:00\u201304:52:55, 1 clips)",
+        "batch": "Agent00 #307 (04:45:00–04:52:55, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/agent00-gta6-auto-307",
         "manifest": "manifests/agent00-gta6-auto-307.json"
       }
     ]
   },
   {
-    "folder": "CaseOh \u2014 Viral Moments",
-    "subtitle": "Twitch CaseOh \u00b7 Split-Screen Facecam + Gameplay \u00b7 Ultra Hooks",
+    "folder": "CaseOh — Viral Moments",
+    "subtitle": "Twitch CaseOh · Split-Screen Facecam + Gameplay · Ultra Hooks",
     "stableIds": true,
     "batches": [
       {
-        "batch": "CaseOh #342 (03:30:00\u201303:45:00, 2 clips)",
+        "batch": "CaseOh #342 (03:30:00–03:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-342",
         "manifest": "manifests/caseoh-viral-auto-342.json"
       },
       {
-        "batch": "CaseOh #336 (03:00:00\u201303:15:00, 3 clips)",
+        "batch": "CaseOh #336 (03:00:00–03:15:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-336",
         "manifest": "manifests/caseoh-viral-auto-336.json"
       },
       {
-        "batch": "CaseOh #319 (02:15:00\u201302:30:00, 2 clips)",
+        "batch": "CaseOh #319 (02:15:00–02:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-319",
         "manifest": "manifests/caseoh-viral-auto-319.json"
       },
       {
-        "batch": "CaseOh #306 (01:15:00\u201301:30:00, 2 clips)",
+        "batch": "CaseOh #306 (01:15:00–01:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-306",
         "manifest": "manifests/caseoh-viral-auto-306.json"
       },
       {
-        "batch": "CaseOh #293 (00:30:00\u201300:45:00, 3 clips)",
+        "batch": "CaseOh #293 (00:30:00–00:45:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-293",
         "manifest": "manifests/caseoh-viral-auto-293.json"
       },
       {
-        "batch": "CaseOh #279 (02:45:00\u201303:00:00, 4 clips)",
+        "batch": "CaseOh #279 (02:45:00–03:00:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-279",
         "manifest": "manifests/caseoh-viral-auto-279.json"
       },
       {
-        "batch": "CaseOh #269 (02:15:00\u201302:30:00, 3 clips)",
+        "batch": "CaseOh #269 (02:15:00–02:30:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-269",
         "manifest": "manifests/caseoh-viral-auto-269.json"
       },
       {
-        "batch": "CaseOh #258 (01:30:00\u201301:45:00, 1 clip)",
+        "batch": "CaseOh #258 (01:30:00–01:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-258",
         "manifest": "manifests/caseoh-viral-auto-258.json"
       },
       {
-        "batch": "CaseOh #265 (02:00:00\u201302:15:00, 2 clips)",
+        "batch": "CaseOh #265 (02:00:00–02:15:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-265",
         "manifest": "manifests/caseoh-viral-auto-265.json"
       }
     ]
   },
   {
-    "folder": "Clix \u2014 GTA 6 Highlights",
-    "subtitle": "Twitch Clix \u00b7 High-Hook GTA 6 Moments",
+    "folder": "Clix — GTA 6 Highlights",
+    "subtitle": "Twitch Clix · High-Hook GTA 6 Moments",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Clix #227 (00:00:00\u201300:04:00, 4 clips)",
+        "batch": "Clix #227 (00:00:00–00:04:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/clix-gta6-auto-227",
         "manifest": "manifests/clix-gta6-auto-227.json"
       }
     ]
   },
   {
-    "folder": "PlaqueBoyMax \u2014 GTA 6 Highlights",
-    "subtitle": "Twitch PlaqueBoyMax \u00b7 High-Hook Clips",
+    "folder": "PlaqueBoyMax — GTA 6 Highlights",
+    "subtitle": "Twitch PlaqueBoyMax · High-Hook Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "PlaqueBoyMax #295 (03:30:00\u201303:42:28, 1 clips)",
+        "batch": "PlaqueBoyMax #295 (03:30:00–03:42:28, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-295",
         "manifest": "manifests/plaqueboymax-gta6-auto-295.json"
       },
       {
-        "batch": "PlaqueBoyMax #281 (02:45:00\u201303:00:00, 4 clips)",
+        "batch": "PlaqueBoyMax #281 (02:45:00–03:00:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-281",
         "manifest": "manifests/plaqueboymax-gta6-auto-281.json"
       },
       {
-        "batch": "PlaqueBoyMax #271 (02:15:00\u201302:30:00, 2 clips)",
+        "batch": "PlaqueBoyMax #271 (02:15:00–02:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-271",
         "manifest": "manifests/plaqueboymax-gta6-auto-271.json"
       },
       {
-        "batch": "PlaqueBoyMax #255 (01:45:00\u201302:00:00, 2 clips)",
+        "batch": "PlaqueBoyMax #255 (01:45:00–02:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-255",
         "manifest": "manifests/plaqueboymax-gta6-auto-255.json"
       },
       {
-        "batch": "PlaqueBoyMax #233 (00:30:00\u201300:45:00, 2 clips)",
+        "batch": "PlaqueBoyMax #233 (00:30:00–00:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/plaqueboymax-gta6-auto-233",
         "manifest": "manifests/plaqueboymax-gta6-auto-233.json"
       }
     ]
   },
   {
-    "folder": "Silky \u2014 GTA 6 Highlights",
-    "subtitle": "Twitch Silky \u00b7 High-Hook Clips",
+    "folder": "Silky — GTA 6 Highlights",
+    "subtitle": "Twitch Silky · High-Hook Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Silky #376 (03:15:00\u201303:30:00, 3 clips)",
+        "batch": "Silky #376 (03:15:00–03:30:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-376",
         "manifest": "manifests/silky-gta6-auto-376.json"
       },
       {
-        "batch": "Silky #361 (01:45:00\u201302:00:00, 1 clips)",
+        "batch": "Silky #361 (01:45:00–02:00:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-361",
         "manifest": "manifests/silky-gta6-auto-361.json"
       },
       {
-        "batch": "Silky #344 (00:30:00\u201300:45:00, 1 clips)",
+        "batch": "Silky #344 (00:30:00–00:45:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-344",
         "manifest": "manifests/silky-gta6-auto-344.json"
       },
       {
-        "batch": "Silky #338 (00:15:00\u201300:30:00, 1 clips)",
+        "batch": "Silky #338 (00:15:00–00:30:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-338",
         "manifest": "manifests/silky-gta6-auto-338.json"
       },
       {
-        "batch": "Silky #331 (05:45:00\u201306:00:00, 2 clips)",
+        "batch": "Silky #331 (05:45:00–06:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-331",
         "manifest": "manifests/silky-gta6-auto-331.json"
       },
       {
-        "batch": "Silky #326 (05:30:00\u201305:45:00, 3 clips)",
+        "batch": "Silky #326 (05:30:00–05:45:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-326",
         "manifest": "manifests/silky-gta6-auto-326.json"
       },
       {
-        "batch": "Silky #304 (03:45:00\u201304:00:00, 2 clips)",
+        "batch": "Silky #304 (03:45:00–04:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-304",
         "manifest": "manifests/silky-gta6-auto-304.json"
       },
       {
-        "batch": "Silky #296 (03:15:00\u201303:30:00, 1 clips)",
+        "batch": "Silky #296 (03:15:00–03:30:00, 1 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-296",
         "manifest": "manifests/silky-gta6-auto-296.json"
       },
       {
-        "batch": "Silky #291 (03:00:00\u201303:15:00, 2 clips)",
+        "batch": "Silky #291 (03:00:00–03:15:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-291",
         "manifest": "manifests/silky-gta6-auto-291.json"
       },
       {
-        "batch": "Silky #277 (02:15:00\u201302:30:00, 1 clip)",
+        "batch": "Silky #277 (02:15:00–02:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-277",
         "manifest": "manifests/silky-gta6-auto-277.json"
       },
       {
-        "batch": "Silky #251 (01:00:00\u201301:15:00, 1 clip)",
+        "batch": "Silky #251 (01:00:00–01:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-251",
         "manifest": "manifests/silky-gta6-auto-251.json"
       },
       {
-        "batch": "Silky #238 (00:45:00\u201301:00:00, 1 clip)",
+        "batch": "Silky #238 (00:45:00–01:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/silky-gta6-auto-238",
         "manifest": "manifests/silky-gta6-auto-238.json"
       }
     ]
   },
   {
-    "folder": "Lacy \u2014 GTA 6 Marathon",
-    "subtitle": "Twitch Lacy \u00b7 Split-Screen Facecam + Gameplay \u00b7 2s Hooks",
+    "folder": "Lacy — GTA 6 Marathon",
+    "subtitle": "Twitch Lacy · Split-Screen Facecam + Gameplay · 2s Hooks",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Lacy GTA 6 #213 (06:00:00\u201306:15:00, 2 clips)",
+        "batch": "Lacy GTA 6 #213 (06:00:00–06:15:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-213",
         "manifest": "manifests/lacy-gta6-auto-213.json"
       },
       {
-        "batch": "Lacy GTA 6 #211 (05:45:00\u201306:00:00, 2 clips)",
+        "batch": "Lacy GTA 6 #211 (05:45:00–06:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-211",
         "manifest": "manifests/lacy-gta6-auto-211.json"
       },
       {
-        "batch": "Lacy GTA 6 #205 (05:15:00\u201305:30:00, 1 clip)",
+        "batch": "Lacy GTA 6 #205 (05:15:00–05:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-205",
         "manifest": "manifests/lacy-gta6-auto-205.json"
       },
       {
-        "batch": "Lacy GTA 6 #198 (04:45:00\u201305:00:00, 1 clip)",
+        "batch": "Lacy GTA 6 #198 (04:45:00–05:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-198",
         "manifest": "manifests/lacy-gta6-auto-198.json"
       },
       {
-        "batch": "Lacy GTA 6 #191 (04:30:00\u201304:45:00, 1 clip)",
+        "batch": "Lacy GTA 6 #191 (04:30:00–04:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-191",
         "manifest": "manifests/lacy-gta6-auto-191.json"
       },
       {
-        "batch": "Lacy GTA 6 #178 (03:45:00\u201304:00:00, 2 clips)",
+        "batch": "Lacy GTA 6 #178 (03:45:00–04:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-178",
         "manifest": "manifests/lacy-gta6-auto-178.json"
       },
       {
-        "batch": "Lacy GTA 6 #156 (02:30:00\u201302:45:00, 1 clip)",
+        "batch": "Lacy GTA 6 #156 (02:30:00–02:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-156",
         "manifest": "manifests/lacy-gta6-auto-156.json"
       },
       {
-        "batch": "Lacy GTA 6 #143 (01:30:00\u201301:45:00, 1 clip)",
+        "batch": "Lacy GTA 6 #143 (01:30:00–01:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-143",
         "manifest": "manifests/lacy-gta6-auto-143.json"
       },
       {
-        "batch": "Lacy GTA 6 #134 (01:00:00\u201301:15:00, 1 clip)",
+        "batch": "Lacy GTA 6 #134 (01:00:00–01:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-134",
         "manifest": "manifests/lacy-gta6-auto-134.json"
       }
     ]
   },
   {
-    "folder": "JasonTheWeen \u2014 GTA 6",
-    "subtitle": "Twitch JasonTheWeen \u00b7 High-Hook GTA 6 Clips",
+    "folder": "JasonTheWeen — GTA 6",
+    "subtitle": "Twitch JasonTheWeen · High-Hook GTA 6 Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "JasonTheWeen #193 (02:15:00\u201302:30:00, 1 clip)",
+        "batch": "JasonTheWeen #193 (02:15:00–02:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/jasontheween-gta6-auto-193",
         "manifest": "manifests/jasontheween-gta6-auto-193.json"
       },
       {
-        "batch": "JasonTheWeen #136 (00:30:00\u201300:45:00, 1 clip)",
+        "batch": "JasonTheWeen #136 (00:30:00–00:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/jasontheween-gta6-auto-136",
         "manifest": "manifests/jasontheween-gta6-auto-136.json"
       }
     ]
   },
   {
-    "folder": "StableRonaldo \u2014 GTA 6 Playthrough",
-    "subtitle": "Twitch StableRonaldo \u00b7 High-Hook GTA 6 Moments",
+    "folder": "StableRonaldo — GTA 6 Playthrough",
+    "subtitle": "Twitch StableRonaldo · High-Hook GTA 6 Moments",
     "stableIds": true,
     "batches": [
       {
-        "batch": "StableRonaldo #216 (04:45:00\u201305:00:00, 6 clips)",
+        "batch": "StableRonaldo #216 (04:45:00–05:00:00, 6 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-216",
         "manifest": "manifests/stableronaldo-gta6-auto-216.json"
       },
       {
-        "batch": "StableRonaldo #214 (04:30:00\u201304:45:00, 3 clips)",
+        "batch": "StableRonaldo #214 (04:30:00–04:45:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-214",
         "manifest": "manifests/stableronaldo-gta6-auto-214.json"
       },
       {
-        "batch": "StableRonaldo #206 (03:45:00\u201304:00:00, 1 clip)",
+        "batch": "StableRonaldo #206 (03:45:00–04:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-206",
         "manifest": "manifests/stableronaldo-gta6-auto-206.json"
       },
       {
-        "batch": "StableRonaldo #202 (03:30:00\u201303:45:00, 1 clip)",
+        "batch": "StableRonaldo #202 (03:30:00–03:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-202",
         "manifest": "manifests/stableronaldo-gta6-auto-202.json"
       },
       {
-        "batch": "StableRonaldo #199 (03:15:00\u201303:30:00, 1 clip)",
+        "batch": "StableRonaldo #199 (03:15:00–03:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-199",
         "manifest": "manifests/stableronaldo-gta6-auto-199.json"
       },
       {
-        "batch": "StableRonaldo #189 (02:45:00\u201303:00:00, 1 clip)",
+        "batch": "StableRonaldo #189 (02:45:00–03:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-189",
         "manifest": "manifests/stableronaldo-gta6-auto-189.json"
       },
       {
-        "batch": "StableRonaldo #184 (02:30:00\u201302:45:00, 1 clip)",
+        "batch": "StableRonaldo #184 (02:30:00–02:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-184",
         "manifest": "manifests/stableronaldo-gta6-auto-184.json"
       },
       {
-        "batch": "StableRonaldo #174 (02:00:00\u201302:15:00, 3 clips)",
+        "batch": "StableRonaldo #174 (02:00:00–02:15:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-174",
         "manifest": "manifests/stableronaldo-gta6-auto-174.json"
       },
       {
-        "batch": "StableRonaldo #144 (01:15:00\u201301:30:00, 1 clip)",
+        "batch": "StableRonaldo #144 (01:15:00–01:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-144",
         "manifest": "manifests/stableronaldo-gta6-auto-144.json"
       },
       {
-        "batch": "StableRonaldo #135 (00:45:00\u201301:00:00, 1 clip)",
+        "batch": "StableRonaldo #135 (00:45:00–01:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-135",
         "manifest": "manifests/stableronaldo-gta6-auto-135.json"
       },
       {
-        "batch": "StableRonaldo #130 (00:30:00\u201300:45:00, 2 clips)",
+        "batch": "StableRonaldo #130 (00:30:00–00:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-130",
         "manifest": "manifests/stableronaldo-gta6-auto-130.json"
       },
       {
-        "batch": "StableRonaldo #120 (00:15:00\u201300:30:00, 1 clip)",
+        "batch": "StableRonaldo #120 (00:15:00–00:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/stableronaldo-gta6-auto-120",
         "manifest": "manifests/stableronaldo-gta6-auto-120.json"
       }
     ]
   },
   {
-    "folder": "FaZe Adapt \u2014 GTA 6",
-    "subtitle": "Twitch Adapt \u00b7 High-Hook GTA 6 Clips",
+    "folder": "FaZe Adapt — GTA 6",
+    "subtitle": "Twitch Adapt · High-Hook GTA 6 Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Adapt #137 (00:15:00\u201300:30:00, 2 clips)",
+        "batch": "Adapt #137 (00:15:00–00:30:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/adapt-gta6-auto-137",
         "manifest": "manifests/adapt-gta6-auto-137.json"
       },
       {
-        "batch": "Adapt #122 (00:00:00\u201300:15:00, 1 clip)",
+        "batch": "Adapt #122 (00:00:00–00:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/adapt-gta6-auto-122",
         "manifest": "manifests/adapt-gta6-auto-122.json"
       }
     ]
   },
   {
-    "folder": "YourRAGE \u2014 $5,000 GTA 6 Pool",
-    "subtitle": "Twitch yourragegaming \u00b7 High-Hook Clips",
+    "folder": "YourRAGE — $5,000 GTA 6 Pool",
+    "subtitle": "Twitch yourragegaming · High-Hook Clips",
     "stableIds": true,
     "batches": [
       {
-        "batch": "YourRAGE #381 (03:00:00\u201303:15:00, 3 clips)",
+        "batch": "YourRAGE #394 (06:15:00–06:30:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-394",
+        "manifest": "manifests/yourrage-gta6-auto-394.json"
+      },
+      {
+        "batch": "YourRAGE #393 (06:00:00–06:15:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-393",
+        "manifest": "manifests/yourrage-gta6-auto-393.json"
+      },
+      {
+        "batch": "YourRAGE #392 (05:45:00–06:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-392",
+        "manifest": "manifests/yourrage-gta6-auto-392.json"
+      },
+      {
+        "batch": "YourRAGE #390 (05:15:00–05:30:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-390",
+        "manifest": "manifests/yourrage-gta6-auto-390.json"
+      },
+      {
+        "batch": "YourRAGE #388 (04:45:00–05:00:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-388",
+        "manifest": "manifests/yourrage-gta6-auto-388.json"
+      },
+      {
+        "batch": "YourRAGE #384 (03:45:00–04:00:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-384",
+        "manifest": "manifests/yourrage-gta6-auto-384.json"
+      },
+      {
+        "batch": "YourRAGE #383 (03:30:00–03:45:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-383",
+        "manifest": "manifests/yourrage-gta6-auto-383.json"
+      },
+      {
+        "batch": "YourRAGE #382 (03:15:00–03:30:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-382",
+        "manifest": "manifests/yourrage-gta6-auto-382.json"
+      },
+      {
+        "batch": "YourRAGE #381 (03:00:00–03:15:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-381",
         "manifest": "manifests/yourrage-gta6-auto-381.json"
       },
       {
-        "batch": "YourRAGE #332 (04:45:00\u201305:00:00, 2 clips)",
+        "batch": "YourRAGE #332 (04:45:00–05:00:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-332",
         "manifest": "manifests/yourrage-gta6-auto-332.json"
       },
       {
-        "batch": "YourRAGE #327 (04:30:00\u201304:45:00, 4 clips)",
+        "batch": "YourRAGE #327 (04:30:00–04:45:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-327",
         "manifest": "manifests/yourrage-gta6-auto-327.json"
       },
       {
-        "batch": "YourRAGE #323 (04:15:00\u201304:30:00, 3 clips)",
+        "batch": "YourRAGE #323 (04:15:00–04:30:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-323",
         "manifest": "manifests/yourrage-gta6-auto-323.json"
       },
       {
-        "batch": "YourRAGE #317 (04:00:00\u201304:15:00, 4 clips)",
+        "batch": "YourRAGE #317 (04:00:00–04:15:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-317",
         "manifest": "manifests/yourrage-gta6-auto-317.json"
       },
       {
-        "batch": "YourRAGE #247 (00:30:00\u201300:45:00, 1 clip)",
+        "batch": "YourRAGE #247 (00:30:00–00:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-247",
         "manifest": "manifests/yourrage-gta6-auto-247.json"
       },
       {
-        "batch": "YourRAGE #223 (07:30:00\u201307:45:00, 3 clips)",
+        "batch": "YourRAGE #223 (07:30:00–07:45:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-223",
         "manifest": "manifests/yourrage-gta6-auto-223.json"
       },
       {
-        "batch": "YourRAGE #215 (07:15:00\u201307:30:00, 4 clips)",
+        "batch": "YourRAGE #215 (07:15:00–07:30:00, 4 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-215",
         "manifest": "manifests/yourrage-gta6-auto-215.json"
       },
       {
-        "batch": "YourRAGE #210 (07:00:00\u201307:15:00, 1 clip)",
+        "batch": "YourRAGE #210 (07:00:00–07:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-210",
         "manifest": "manifests/yourrage-gta6-auto-210.json"
       },
       {
-        "batch": "YourRAGE #200 (06:15:00\u201306:30:00, 1 clip)",
+        "batch": "YourRAGE #200 (06:15:00–06:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-200",
         "manifest": "manifests/yourrage-gta6-auto-200.json"
       },
       {
-        "batch": "YourRAGE #167 (04:30:00\u201304:45:00, 2 clips)",
+        "batch": "YourRAGE #167 (04:30:00–04:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-167",
         "manifest": "manifests/yourrage-gta6-auto-167.json"
       },
       {
-        "batch": "YourRAGE #155 (03:30:00\u201303:45:00, 1 clip)",
+        "batch": "YourRAGE #155 (03:30:00–03:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-155",
         "manifest": "manifests/yourrage-gta6-auto-155.json"
       },
       {
-        "batch": "YourRAGE #150 (03:00:00\u201303:15:00, 1 clip)",
+        "batch": "YourRAGE #150 (03:00:00–03:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-150",
         "manifest": "manifests/yourrage-gta6-auto-150.json"
       },
       {
-        "batch": "YourRAGE #109 (05:30:00\u201305:45:00, 1 clip)",
+        "batch": "YourRAGE #109 (05:30:00–05:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-109",
         "manifest": "manifests/yourrage-gta6-auto-109.json"
       },
       {
-        "batch": "YourRAGE #99 (03:00:00\u201303:15:00, 1 clip)",
+        "batch": "YourRAGE #99 (03:00:00–03:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-099",
         "manifest": "manifests/yourrage-gta6-auto-099.json"
       },
       {
-        "batch": "YourRAGE #92 (01:45:00\u201302:00:00, 1 clip)",
+        "batch": "YourRAGE #92 (01:45:00–02:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-092",
         "manifest": "manifests/yourrage-gta6-auto-092.json"
       },
       {
-        "batch": "YourRAGE #85 (00:00:00\u201300:15:00, 1 clip)",
+        "batch": "YourRAGE #85 (00:00:00–00:15:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-085",
         "manifest": "manifests/yourrage-gta6-auto-085.json"
       }
     ]
   },
   {
-    "folder": "Lacy \u2014 GTA 6 Early Access Marathon",
-    "subtitle": "Twitch Lacy \u00b7 Strict 2s Hooks \u00b7 Check MVR before CR submit",
+    "folder": "Lacy — GTA 6 Early Access Marathon",
+    "subtitle": "Twitch Lacy · Strict 2s Hooks · Check MVR before CR submit",
     "stableIds": true,
     "batches": [
       {
-        "batch": "Lacy GTA 6 #77 (10:30:00\u201310:45:00, 1 clip)",
+        "batch": "Lacy GTA 6 #77 (10:30:00–10:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-077",
         "manifest": "manifests/lacy-gta6-auto-077.json"
       },
       {
-        "batch": "Lacy GTA 6 #76 (10:15:00\u201310:30:00, 1 clip)",
+        "batch": "Lacy GTA 6 #76 (10:15:00–10:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-076",
         "manifest": "manifests/lacy-gta6-auto-076.json"
       },
       {
-        "batch": "Lacy GTA 6 #40 (06:15:00\u201306:30:00, 1 clip)",
+        "batch": "Lacy GTA 6 #40 (06:15:00–06:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-040",
         "manifest": "manifests/lacy-gta6-auto-040.json"
       },
       {
-        "batch": "Lacy GTA 6 #38 (05:45:00\u201306:00:00, 1 clip)",
+        "batch": "Lacy GTA 6 #38 (05:45:00–06:00:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-038",
         "manifest": "manifests/lacy-gta6-auto-038.json"
       },
       {
-        "batch": "Lacy GTA 6 #8 (01:30:00\u201301:45:00, 1 clip)",
+        "batch": "Lacy GTA 6 #8 (01:30:00–01:45:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-008",
         "manifest": "manifests/lacy-gta6-auto-008.json"
       },
       {
-        "batch": "Lacy GTA 6 #7 (01:15:00\u201301:30:00, 1 clip)",
+        "batch": "Lacy GTA 6 #7 (01:15:00–01:30:00, 1 clip)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-auto-007",
         "manifest": "manifests/lacy-gta6-auto-007.json"
       }
     ]
   },
   {
-    "folder": "Lacy \u2014 GTA 6",
-    "subtitle": "Split-Screen Facecam + GTA 6 \u00b7 Strict 2s Hooks \u00b7 #LACY #GTA6",
+    "folder": "Lacy — GTA 6",
+    "subtitle": "Split-Screen Facecam + GTA 6 · Strict 2s Hooks · #LACY #GTA6",
     "batches": [
       {
-        "batch": "Batch 1 (4 Clips \u2014 Auto-Clipper \u00b7 88-95 Virality)",
+        "batch": "Batch 1 (4 Clips — Auto-Clipper · 88-95 Virality)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/lacy-gta6-batch1",
         "manifest": "manifests/lacy_gta6_batch1.json"
       }
     ]
   },
   {
-    "folder": "IShowSpeed \u2014 GTA 6",
-    "subtitle": "Split-Screen Facecam + Gameplay \u00b7 Outclass Hooks",
+    "folder": "IShowSpeed — GTA 6",
+    "subtitle": "Split-Screen Facecam + Gameplay · Outclass Hooks",
     "batches": [
       {
-        "batch": "Batch 2 (4 Bangers \u2014 Strict 2s Hooks & Pill Overlays)",
+        "batch": "Batch 2 (4 Bangers — Strict 2s Hooks & Pill Overlays)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/gta6-batch2",
         "manifest": "manifests/gta6_batch2.json"
       },
@@ -520,10 +560,10 @@
   },
   {
     "folder": "Expedia x IShowSpeed ($8K Campaign)",
-    "subtitle": "Include #IShowSpeed \u00b7 Submit within 30 mins",
+    "subtitle": "Include #IShowSpeed · Submit within 30 mins",
     "batches": [
       {
-        "batch": "Batch 2 (10 Clips \u2014 Hong Kong & Japan)",
+        "batch": "Batch 2 (10 Clips — Hong Kong & Japan)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/batch-2",
         "manifest": "manifests/expedia_batch2.json"
       }
