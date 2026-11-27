@@ -368,6 +368,21 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "YourRAGE #398 (07:15:00–07:30:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-398",
+        "manifest": "manifests/yourrage-gta6-auto-398.json"
+      },
+      {
+        "batch": "YourRAGE #397 (07:00:00–07:15:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-397",
+        "manifest": "manifests/yourrage-gta6-auto-397.json"
+      },
+      {
+        "batch": "YourRAGE #395 (06:30:00–06:45:00, 3 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-395",
+        "manifest": "manifests/yourrage-gta6-auto-395.json"
+      },
+      {
         "batch": "YourRAGE #394 (06:15:00–06:30:00, 3 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/yourrage-gta6-auto-394",
         "manifest": "manifests/yourrage-gta6-auto-394.json"
