@@ -419,16 +419,16 @@ def resolve_split_crop(
         if not edge_faces and fh_n >= 0.16 and 0.25 <= cx <= 0.75:
             return ("center", presets["center"], "center")
 
-        # Tight 16:10 webcam window around detected face center; snaps cleanly to left/right borders
-        box_w = max(0.22, min(0.34, fh_n * 3.8))
-        box_h = max(0.24, min(0.38, box_w * 1.1))
+        # Tight corner webcam window around detected face center; avoid grabbing HUD/gameplay border bleed
+        box_w = max(0.18, min(0.25, fh_n * 2.5))
+        box_h = max(0.18, min(0.24, box_w * 0.92))
         if cx < 0.18:
             bx = 0.0
         elif cx > 0.82:
             bx = 1.0 - box_w
         else:
             bx = max(0.0, min(1.0 - box_w, cx - box_w / 2.0))
-        by = max(0.0, min(1.0 - box_h, cy - box_h * 0.42))
+        by = max(0.0, min(1.0 - box_h, cy - box_h * 0.38))
         side = "left" if bx < 0.20 else ("right" if bx + box_w > 0.80 else "center")
         return ("split", (round(bx, 3), round(by, 3), round(box_w, 3), round(box_h, 3)), side)
     except Exception:
@@ -592,13 +592,8 @@ def render_portrait_clip(
                 f",scale=w='if(between(t,{p0:.2f},{p1:.2f}),1166,1080)':"
                 f"h='if(between(t,{p0:.2f},{p1:.2f}),756,700)':eval=frame,crop=1080:700"
             )
-        # Keep bottom gameplay crop clear of left/right corner webcam overlays
-        if cam_side == "right":
-            game_crop_x = "0"
-        elif cam_side == "left":
-            game_crop_x = "(iw-ih*1080/1220)"
-        else:
-            game_crop_x = "(iw-ih*1080/1220)/2"
+        # Center bottom gameplay crop (excludes left/right corner overlays and keeps action centered)
+        game_crop_x = "(iw-ih*1080/1220)/2"
         filter_parts.append(
             f"{v_in}split=2[vcam_src][vgame_src];"
             f"{cam_filter}[cam_top];"

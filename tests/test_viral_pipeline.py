@@ -209,8 +209,20 @@ class ViralPipelineUnitTests(unittest.TestCase):
         self.assertIn("#Shorts", yt["name"])
         self.assertEqual(yt["settings"]["privacyStatus"], "public")
 
-        from buffer_publish import _normalize_service, build_buffer_create_input
+        from buffer_publish import (
+            BUFFER_DEFAULT_SPACING_MINUTES,
+            _normalize_service,
+            buffer_daily_cap,
+            build_buffer_create_input,
+        )
         from clip_engine import resolve_split_crop
+        from viral_selector import GroundedHook
+
+        self.assertEqual(BUFFER_DEFAULT_SPACING_MINUTES, 180)
+        self.assertEqual(buffer_daily_cap("youtube"), 2)
+        self.assertEqual(buffer_daily_cap("tiktok"), 4)
+        self.assertEqual(buffer_daily_cap("instagram"), 6)
+        self.assertIn("is_good_visual", GroundedHook.model_fields)
 
         self.assertEqual(_normalize_service("tiktok"), "tiktok")
         self.assertEqual(_normalize_service("instagramBusiness"), "instagram")

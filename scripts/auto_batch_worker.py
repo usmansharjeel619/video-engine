@@ -38,8 +38,8 @@ STATE_FILE = BATCH_ROOT / "worker_state.json"
 SLICE_SECONDS = 900  # 15-minute continuous slices keep disk & whisper fast
 MIN_FREE_GB = 15.0
 MAX_PENDING_QA_BATCHES = 18
-DAILY_CLIP_TARGET = 45
-MAX_RAW_CLIPS_PER_DAY = 55
+DAILY_CLIP_TARGET = 20
+MAX_RAW_CLIPS_PER_DAY = 30
 MAX_SLICE_RETRIES = 2
 
 
@@ -373,11 +373,9 @@ def _run_slice_pipeline(
         "--top-n",
         str(src_cfg.get("top_n", 4)),
         "--min-virality",
-        str(src_cfg.get("min_virality", 80)),
+        str(src_cfg.get("min_virality", 83)),
         "--min-hook-score",
         str(src_cfg.get("min_hook_score", 85)),
-        "--no-trim-silence",
-        "--no-ground-hooks",
         "--publish",
         "none",
     ]

@@ -31,10 +31,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 STATE_FILE = REPO_ROOT / "output" / "buffer_state.json"
 BUFFER_API_URL = "https://api.buffer.com"
 DEFAULT_MAX_QUEUE = 10  # Buffer Free plan caps concurrent queued posts at 10 per channel
+BUFFER_DEFAULT_SPACING_MINUTES = 180  # Space future posts 3h apart so each clip gets organic reach
 BUFFER_PROVIDER_DAILY_CAPS = {
     "youtube": 2,   # Buffer enforces max 2 YouTube posts per day
-    "tiktok": 10,
-    "instagram": 35,
+    "tiktok": 4,    # 4 top clips/day avoids spam throttling on TikTok
+    "instagram": 6, # 6 top Reels/day avoids repost-bot throttling vs 35/day
 }
 
 
@@ -280,7 +281,7 @@ def publish_to_buffer(
     manifest_items: list[tuple[str, dict[str, Any], str]],
     max_queue_per_channel: int = DEFAULT_MAX_QUEUE,
     daily_cap: int = DEFAULT_DAILY_CAP,
-    spacing_minutes: int = DEFAULT_SPACING_MINUTES,
+    spacing_minutes: int = BUFFER_DEFAULT_SPACING_MINUTES,
     skip_socialclaw_dupes: bool = True,
     dry_run: bool = False,
 ) -> dict[str, Any]:
@@ -421,7 +422,7 @@ def main() -> None:
     parser.add_argument("--refill-from-hub", action="store_true", help="Top up open Buffer slots from manifests/hub_config.json.")
     parser.add_argument("--max-queue", type=int, default=DEFAULT_MAX_QUEUE, help="Max concurrent future queued posts per channel (10 on Buffer Free, 0=unlimited).")
     parser.add_argument("--daily-cap", type=int, default=DEFAULT_DAILY_CAP)
-    parser.add_argument("--spacing-minutes", type=int, default=DEFAULT_SPACING_MINUTES)
+    parser.add_argument("--spacing-minutes", type=int, default=BUFFER_DEFAULT_SPACING_MINUTES)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 

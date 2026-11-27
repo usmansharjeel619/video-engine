@@ -42,7 +42,7 @@ cd ~/video-engine
 ```
 
 - For `stream_boot_11_25m.mp4` / same IShowSpeed overlay layout (`1920x1080` mid-left webcam), `--cam-pos 0.0,0.425,0.205,0.225` is razor-exact; for new streamers/layouts use `--cam-pos auto` (YuNet) and **verify visually in `qa/*.png`**.
-- Keep `--min-virality 76 --min-hook-score 80`. Drop weak setups, slow dialogue, or generic hooks so every published clip has genuine viral upside.
+- Keep `--min-virality 83 --min-hook-score 85`. Reject pause menus (`CONTINUE / SETTINGS / QUIT`), pitch-black/static screens, HUD-bleeding facecam boxes (`PROGRESS 25%`, viewer counts), and generic filler hooks (`"THIS"`, `"WENT WRONG"`, `"BRO"`). Every published clip must have genuine viral upside and crisp silence-trimmed pacing.
 
 ---
 

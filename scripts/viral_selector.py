@@ -120,6 +120,8 @@ class DetailResponse(BaseModel):
 
 
 class GroundedHook(BaseModel):
+    is_good_visual: bool = True
+    reject_reason: str = Field(default="")
     on_screen: str
     viral_hook_text: str
     video_title_for_youtube_short: str
@@ -165,14 +167,14 @@ CLIP RULES:
 - HOW MANY: Return UP TO {max_clips} clips sorted best-to-worst by `predicted_score`. Inspect EVERY shortlisted window but only return genuine bangers (never pad with weak filler).
 - DIVERSITY: Never return two clips covering the same joke, point, or beat.
 {instructions_block}{keyword_block}
-HOOK PLAYBOOK — craft `viral_hook_text` (STRICT MAX 6 WORDS + 1-2 fitting emojis, <= 42 chars total, in {language}, so it hits instantly on 2 crisp lines):
-- MUST stop a cold viewer in 0.8 seconds AND spark a curiosity gap WITHOUT spoiling the punchline.
-- BANNED generic filler words: NEVER write vague phrases like "over this", "what happened", "he reacts", "crazy moment", "watch till the end", or "you won't believe".
-- ALWAYS name the concrete trigger, stake, quote, mistake, or clash in plain punchy words:
-  * Instant Tension: "HE INSTANTLY REGRETTED SAYING THAT 💀"
-  * Absurd Betrayal / Karma: "COPS RUINED HIS $1M ESCAPE 🚨"
-  * Curiosity Gap: "WHY DID CASEOH GO SILENT?! 😭"
-  * Unfiltered Quote / Contrast: "FROM TALKING TRASH TO PANICKING 💀"
+HOOK PLAYBOOK — craft `viral_hook_text` (STRICT MAX 5-6 WORDS + 1-2 fitting emojis, <= 38 chars total, in {language}, crisp 2-line punch):
+- MUST stop a cold viewer in 0.8 seconds AND create an open curiosity loop WITHOUT spoiling the payoff.
+- STRICTLY BANNED generic filler words: NEVER write "THIS", "OVER THIS", "WHAT HAPPENED", "HE REACTS", "WENT WRONG", "CRAZY MOMENT", "JAMES BOND", "WATCH TILL THE END", or "BRO".
+- Write like a top TikTok/Reels editor — concrete, specific, zero fluff:
+  * Shock / Mistake: "HE INSTANTLY REGRETTED SAYING THAT 💀"
+  * Betrayal / Karma: "COPS RUINED HIS $1M ESCAPE 🚨"
+  * Open Question: "WHY DID CASEOH GO SILENT?! 😭"
+  * Twist / Contrast: "TALKED TRASH FOR 5 SECONDS 💀"
 
 COPY RULES (all text in {language}):
 - `video_description_for_tiktok` & `video_description_for_instagram`: 1-2 punchy curiosity sentences teasing the payoff + 3-5 relevant hashtags{extra_tags_hint}.
@@ -191,9 +193,11 @@ GROUNDED_HOOK_PROMPT = """
 These 3 frames come in order from ONE vertical/streamer clip, and the transcript below is what was spoken during it.
 The draft hook/title were written from transcript alone without seeing the webcam reaction or on-screen action.
 
-1. `on_screen`: Name the concrete visual action, expression, game/scene element, character, or text visible in the frames (1 line).
-2. `viral_hook_text`: Rewrite a scroll-stopping overlay (STRICT MAX 10 WORDS + 1-2 fitting emojis, in {language}). Ground it in what is ACTUALLY visible in the frames + the single strongest concrete fact/reaction in the transcript. Never write generic summaries that could apply to any clip.
-3. `video_title_for_youtube_short`: <= 100 chars in {language}, grounded in both visuals and speech, truthful and curiosity-driven.
+1. `is_good_visual`: Return `false` if ANY frame shows a pitch-black/blank gameplay area, pause menu (`CONTINUE / SETTINGS / QUIT`), loading screen, title screen, `NO SIGNAL`, or pure boring menu/lobby idle with no real action. Return `true` only if clear active gameplay or an expressive high-stakes scene is visible.
+2. `reject_reason`: Empty string if `is_good_visual` is `true`, otherwise explain briefly why (e.g., "pause menu on black screen").
+3. `on_screen`: Name the concrete visual action, expression, game/scene element, character, or text visible in the frames (1 line).
+4. `viral_hook_text`: Rewrite a razor-sharp overlay (STRICT MAX 5-6 WORDS + 1-2 emojis, <= 38 chars total, in {language}). Ground it in the ACTUAL visual scene + sharpest spoken line. NEVER use generic filler ("THIS", "WENT WRONG", "BRO", "MOVIE", "WHAT HAPPENED").
+5. `video_title_for_youtube_short`: <= 95 chars in {language}, grounded in visuals and speech, truthful and curiosity-driven.
 
 TRANSCRIPT_LANGUAGE: {language}
 CURRENT_HOOK: {current_hook}
@@ -965,8 +969,20 @@ def ground_hook_with_vision(
             hook = str(data.get("viral_hook_text") or "").strip()
             title = str(data.get("video_title_for_youtube_short") or "").strip()
             on_screen = str(data.get("on_screen") or "").strip()
+            is_good = data.get("is_good_visual", True) is not False
+            reject_reason = str(data.get("reject_reason") or "").strip()
+            if not is_good:
+                return {
+                    "is_good_visual": False,
+                    "reject_reason": reject_reason or "black/menu/static screen",
+                    "on_screen": on_screen,
+                    "viral_hook_text": hook or current_hook,
+                    "video_title_for_youtube_short": title or current_title,
+                }
             if hook:
                 return {
+                    "is_good_visual": True,
+                    "reject_reason": "",
                     "on_screen": on_screen,
                     "viral_hook_text": hook,
                     "video_title_for_youtube_short": title or current_title,
@@ -1064,6 +1080,7 @@ def analyze_and_select_viral_clips(
 
     if ground_hooks and selected and source_video.exists():
         print(f"Pass 3: Vision-grounding hooks on {len(selected)} selected clips via {_selector_label(resolved_model)}...")
+        kept_selected: list[dict[str, Any]] = []
         for idx, clip in enumerate(selected, start=1):
             abs_s = offset_seconds + clip["start"]
             abs_e = offset_seconds + clip["end"]
@@ -1078,10 +1095,18 @@ def analyze_and_select_viral_clips(
                 current_title=clip.get("video_title_for_youtube_short", ""),
                 language=language,
             )
+            if grounded and grounded.get("is_good_visual") is False:
+                print(
+                    f"  [{idx}] Rejected by Vision QA: {grounded.get('reject_reason')} "
+                    f"(screen: {grounded.get('on_screen', '')[:60]})"
+                )
+                continue
             if grounded:
                 clip["on_screen"] = grounded["on_screen"]
                 clip["viral_hook_text"] = grounded["viral_hook_text"]
                 clip["video_title_for_youtube_short"] = grounded["video_title_for_youtube_short"]
                 print(f"  [{idx}] Hook grounded -> {clip['viral_hook_text']} (screen: {clip['on_screen'][:70]})")
+            kept_selected.append(clip)
+        selected = kept_selected
 
     return selected
