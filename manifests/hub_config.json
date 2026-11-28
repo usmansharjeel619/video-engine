@@ -52,6 +52,46 @@
     "stableIds": true,
     "batches": [
       {
+        "batch": "CaseOh #426 (09:00:00–09:15:00, 2 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-426",
+        "manifest": "manifests/caseoh-viral-auto-426.json"
+      },
+      {
+        "batch": "CaseOh #424 (08:30:00–08:45:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-424",
+        "manifest": "manifests/caseoh-viral-auto-424.json"
+      },
+      {
+        "batch": "CaseOh #416 (06:30:00–06:45:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-416",
+        "manifest": "manifests/caseoh-viral-auto-416.json"
+      },
+      {
+        "batch": "CaseOh #414 (06:00:00–06:15:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-414",
+        "manifest": "manifests/caseoh-viral-auto-414.json"
+      },
+      {
+        "batch": "CaseOh #413 (05:45:00–06:00:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-413",
+        "manifest": "manifests/caseoh-viral-auto-413.json"
+      },
+      {
+        "batch": "CaseOh #409 (04:45:00–05:00:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-409",
+        "manifest": "manifests/caseoh-viral-auto-409.json"
+      },
+      {
+        "batch": "CaseOh #404 (03:30:00–03:45:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-404",
+        "manifest": "manifests/caseoh-viral-auto-404.json"
+      },
+      {
+        "batch": "CaseOh #403 (03:15:00–03:30:00, 1 clips)",
+        "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-403",
+        "manifest": "manifests/caseoh-viral-auto-403.json"
+      },
+      {
         "batch": "CaseOh #342 (03:30:00–03:45:00, 2 clips)",
         "baseUrl": "https://github.com/usmansharjeel619/video-engine/releases/download/caseoh-viral-auto-342",
         "manifest": "manifests/caseoh-viral-auto-342.json"
